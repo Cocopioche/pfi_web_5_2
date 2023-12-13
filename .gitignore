@@ -134,3 +134,7 @@ dist
 /jsonFiles/Tokens.json
 /jsonFiles/Users.json
 /jsonFiles/Words.json
+/.idea/.gitignore
+/.idea/modules.xml
+/.idea/PFI_part_2.iml
+/.idea/vcs.xml
