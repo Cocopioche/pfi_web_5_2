@@ -71,6 +71,7 @@ function attachCmd() {
     $('#renderManageUsersMenuCmd').on('click', renderManageUsers);
     $('#editProfilCmd').on('click', renderEditProfilForm);
     $('#aboutCmd').on("click", renderAbout);
+    $("#newPhotoCmd").on("click", renderCreatePhoto);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Header management
@@ -354,8 +355,73 @@ async function renderPhotos() {
 }
 async function renderPhotosList() {
     eraseContent();
+    $("#newPhotoCmd").show();
     $("#content").append("<h2> En contruction </h2>");
 }
+
+async function renderCreatePhoto(){
+    timeout()
+    eraseContent()
+    UpdateHeader("Ajout de photos", "createPhoto");
+    $("#newPhotoCmd").hide()
+    $("#content").append(`
+    <br>
+    <form class="form" id="createPhotoForm">
+        <fieldset>
+            <legend>Informations</legend>
+            <input class="form-control" 
+                   type="text"
+                   name="Title"
+                   id="Title"
+                   placeholder="Titre"
+                   required>
+            <textarea class="form-control"
+                      name="Description"
+                      id="Description"
+                      placeholder="Description"
+                      rows="4"
+                      required></textarea>
+            <input 
+                   type="checkbox"
+                   name="Share"
+                   id="Shared">
+            <label for="Share" style="user-select: none" >Partagée</label>
+        </fieldset>
+        <fieldset>
+            <legend>Image</legend>
+            <div class='imageUploader' 
+                 newImage='true' 
+                 controlId='Image' 
+                 imageSrc='images/PhotoCloudLogo.png' 
+                 waitingImage="images/Loading_icon.gif">
+            </div>
+        </fieldset>
+        <input type='submit' name='submit' id='savePhoto' value="Enregistrer" class="form-control btn-primary">
+    </form>
+    <div class="cancel">
+        <button class="form-control btn-secondary" id="abortCreatePhotoCmd">Annuler</button>
+    </div>
+    `);
+    initFormValidation()
+    initImageUploaders();
+    $("#abortCreatePhotoCmd").on("click",renderPhotosList)
+    $("#createPhotoForm").on("submit",async (event) => {
+        let data = getFormData($("#createPhotoForm"))
+        data["Shared"] = $("#Shared").is("checked")
+        data['OwnerId'] = API.retrieveLoggedUser().Id
+
+        event.preventDefault()
+        showWaitingGif()
+        console.log(data)
+        if (await API.CreatePhoto(data)) {
+            renderPhotosList()
+        }
+        else {
+            renderError("Un problème est survenu.");
+        }
+    })
+}
+
 function renderVerify() {
     eraseContent();
     UpdateHeader("Vérification", "verify");
