@@ -390,10 +390,16 @@ async function renderPhotos() {
 async function renderPhotosList() {
     eraseContent();
     $("#newPhotoCmd").show();
-    $("#content").append("<h2> En contruction </h2><br><button class='modifyButton' data-photo-id='eaefb490-99f1-11ee-90d3-114082fc2e65'>modifier</button>");
+    $("#content").append("<h2> En contruction </h2><br>" +
+        "<button class='modifyButton' data-photo-id='eaefb490-99f1-11ee-90d3-114082fc2e65'>modifier</button>" +
+        "<button class='deleteButton' data-photo-id='eaefb490-99f1-11ee-90d3-114082fc2e65'>delete</button>");
     $(".modifyButton").on("click", (event) => {
         let photoId = $(event.currentTarget).data("photo-id")
         renderModifyPhoto(photoId)
+    })
+    $(".deleteButton").on("click", (event) => {
+        let photoId = $(event.currentTarget).data("photo-id")
+        renderDeletePhoto(photoId)
     })
 }
 
@@ -531,6 +537,46 @@ function renderModifyPhoto(photoId) {
         renderError("Un problème est survenu.")
     )
 
+}
+
+function renderDeletePhoto(photoId){
+    timeout()
+    showWaitingGif()
+    API.GetPhotosById(photoId).then(
+        (photo) => {
+            console.log(photo)
+            eraseContent()
+            UpdateHeader("Retrait de photo", "deletePhoto");
+            $("#newPhotoCmd").hide()
+            $("#content").append(`
+            <div class="content loginForm">
+                <br>
+                
+                <div class="form">
+                 <h3> Voulez-vous vraiment effacer cette photo? </h3>
+                 <div class="photoTitle">${photo.Title}</div>
+                 <img class="photoDetailsLargeImage" src="${photo.Image}" alt="${photo.Description}">
+                 <button class="form-control btn-danger" id="deletePhotoCmd">Effacer la photo</button>
+                 <br>
+                 <button class="form-control btn-secondary" id="cancelDeletePhotoCmd">Annuler</button>
+                </div>
+            </div>
+           `);
+            $("#cancelDeletePhotoCmd").on("click", () => {
+                renderPhotosList()
+            })
+            $("#deletePhotoCmd").on("click", () => {
+                showWaitingGif()
+                API.DeletePhoto(photoId).then(
+                    renderPhotosList
+                ).catch(() => {
+                    renderError("Un problème est survenu.")
+                })
+            })
+        }
+    ).catch(
+        renderError("Un problème est survenu.")
+    )
 }
 
 function renderVerify() {
