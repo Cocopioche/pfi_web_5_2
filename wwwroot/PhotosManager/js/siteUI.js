@@ -391,8 +391,9 @@ async function renderPhotosList() {
     eraseContent();
     $("#newPhotoCmd").show();
     $("#content").append("<h2> En contruction </h2><br>" +
-        "<button class='modifyButton' data-photo-id='eaefb490-99f1-11ee-90d3-114082fc2e65'>modifier</button>" +
-        "<button class='deleteButton' data-photo-id='eaefb490-99f1-11ee-90d3-114082fc2e65'>delete</button>");
+        "<button class='modifyButton' data-photo-id='15d2c8d1-9af3-11ee-a522-372389a59be3'>modifier</button>" +
+        "<button class='deleteButton' data-photo-id='15d2c8d1-9af3-11ee-a522-372389a59be3'>delete</button>" +
+        "<button class='detailButton' data-photo-id='15d2c8d1-9af3-11ee-a522-372389a59be3'>detail</button>");
     $(".modifyButton").on("click", (event) => {
         let photoId = $(event.currentTarget).data("photo-id")
         renderModifyPhoto(photoId)
@@ -400,6 +401,10 @@ async function renderPhotosList() {
     $(".deleteButton").on("click", (event) => {
         let photoId = $(event.currentTarget).data("photo-id")
         renderDeletePhoto(photoId)
+    })
+    $(".detailButton").on("click", (event) => {
+        let photoId = $(event.currentTarget).data("photo-id")
+        renderDetailPhoto(photoId)
     })
 }
 
@@ -470,7 +475,6 @@ function renderModifyPhoto(photoId) {
     showWaitingGif()
     API.GetPhotosById(photoId).then(
         (photo) => {
-            console.log(photo)
             eraseContent()
             UpdateHeader("Modification de photo", "updatePhoto");
             $("#newPhotoCmd").hide()
@@ -577,6 +581,36 @@ function renderDeletePhoto(photoId){
     ).catch(
         renderError("Un problème est survenu.")
     )
+}
+
+function renderDetailPhoto(photoId){
+    let loggedUser = API.retrieveLoggedUser()
+    timeout()
+    showWaitingGif()
+    API.GetPhotosById(photoId).then( (photo) => {
+        eraseContent()
+        UpdateHeader("Modification de photo", "updatePhoto");
+        $("#newPhotoCmd").hide()
+        $("#content").append(`
+                <div class="UserContainer noselect">
+                    <div class="UserLayout">
+                        <div class="UserAvatar" style="background-image:url('${loggedUser.Avatar}')"></div>
+                        <div class="UserInfo">
+                            <span class="UserName">${loggedUser.Name}</span>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="photoDetailsTitle">${photo.Title}</div>
+                <img src="${photo.Image}" class="photoDetailsLargeImage">
+                <div style="display: flex;justify-content: space-between;">
+                    <div class="photoDetailsCreationDate">${convertToFrenchDate(photo.Date)}</div>
+                                                                                  <!--Remove "-regular" for a fill thumbs up-->
+                    <div class="likesSummary" style="margin-right: 10px">3<i class="cmdIcon fa-regular fa-thumbs-up"></i></div>
+                </div>
+                <div class="photoDetailsDescription">${photo.Description}</div>
+        `)
+    })
 }
 
 function renderVerify() {
