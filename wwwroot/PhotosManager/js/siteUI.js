@@ -19,6 +19,7 @@ let VerticalPhotosCount;
 let offset = 0;
 
 Init_UI();
+
 function Init_UI() {
     getViewPortPhotosRanges();
     initTimeout(delayTimeOut, renderExpiredSession);
@@ -38,6 +39,7 @@ function getViewPortPhotosRanges() {
     console.log("VerticalPhotosCount:", VerticalPhotosCount, "HorizontalPhotosCount:", HorizontalPhotosCount)
     offset = 0;
 }
+
 // pour la pagination
 function installWindowResizeHandler() {
     var resizeTimer = null;
@@ -62,6 +64,7 @@ function installWindowResizeHandler() {
         }
     });
 }
+
 function attachCmd() {
     $('#loginCmd').on('click', renderLoginForm);
     $('#logoutCmd').on('click', logout);
@@ -73,6 +76,7 @@ function attachCmd() {
     $('#aboutCmd').on("click", renderAbout);
     $("#newPhotoCmd").on("click", renderCreatePhoto);
 }
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Header management
 function loggedUserMenu() {
@@ -97,21 +101,21 @@ function loggedUserMenu() {
                 <i class="menuIcon fa fa-image mx-2"></i> Liste des photos
             </span>
         `;
-    }
-    else
+    } else
         return `
             <span class="dropdown-item" id="loginCmd">
                 <i class="menuIcon fa fa-sign-in mx-2"></i> Connexion
             </span>`;
 }
+
 function viewMenu(viewName) {
     if (viewName == "photosList") {
         // todo
         return "";
-    }
-    else
+    } else
         return "";
 }
+
 function connectedUserAvatar() {
     let loggedUser = API.retrieveLoggedUser();
     if (loggedUser)
@@ -120,9 +124,11 @@ function connectedUserAvatar() {
         `;
     return "";
 }
+
 function refreshHeader() {
     UpdateHeader(currentViewTitle, currentViewName);
 }
+
 function UpdateHeader(viewTitle, viewName) {
     currentViewTitle = viewTitle;
     currentViewName = viewName;
@@ -166,6 +172,7 @@ function UpdateHeader(viewTitle, viewName) {
     }
     attachCmd();
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Actions and command
 async function login(credential) {
@@ -177,9 +184,17 @@ async function login(credential) {
     await API.login(credential.Email, credential.Password);
     if (API.error) {
         switch (API.currentStatus) {
-            case 482: passwordError = "Mot de passe incorrect"; renderLoginForm(); break;
-            case 481: EmailError = "Courriel introuvable"; renderLoginForm(); break;
-            default: renderError("Le serveur ne répond pas"); break;
+            case 482:
+                passwordError = "Mot de passe incorrect";
+                renderLoginForm();
+                break;
+            case 481:
+                EmailError = "Courriel introuvable";
+                renderLoginForm();
+                break;
+            default:
+                renderError("Le serveur ne répond pas");
+                break;
         }
     } else {
         let loggedUser = API.retrieveLoggedUser();
@@ -190,20 +205,22 @@ async function login(credential) {
                 loginMessage = "Votre compte a été bloqué par l'administrateur";
                 logout();
             }
-        }
-        else
+        } else
             renderVerify();
     }
 }
+
 async function logout() {
     console.log('logout');
     await API.logout();
     renderLoginForm();
 }
+
 function isVerified() {
     let loggedUser = API.retrieveLoggedUser();
     return loggedUser.VerifyCode == "verified";
 }
+
 async function verify(verifyCode) {
     let loggedUser = API.retrieveLoggedUser();
     if (await API.verifyEmail(loggedUser.Id, verifyCode)) {
@@ -212,6 +229,7 @@ async function verify(verifyCode) {
         renderError("Désolé, votre code de vérification n'est pas valide...");
     }
 }
+
 async function editProfil(profil) {
     if (await API.modifyUserProfil(profil)) {
         let loggedUser = API.retrieveLoggedUser();
@@ -227,6 +245,7 @@ async function editProfil(profil) {
         renderError("Un problème est survenu.");
     }
 }
+
 async function createProfil(profil) {
     if (await API.register(profil)) {
         loginMessage = "Votre compte a été créé. Veuillez prendre vos courriels pour réccupérer votre code de vérification qui vous sera demandé lors de votre prochaine connexion."
@@ -235,6 +254,7 @@ async function createProfil(profil) {
         renderError("Un problème est survenu.");
     }
 }
+
 async function adminDeleteAccount(userId) {
     if (await API.unsubscribeAccount(userId)) {
         renderManageUsers();
@@ -242,6 +262,7 @@ async function adminDeleteAccount(userId) {
         renderError("Un problème est survenu.");
     }
 }
+
 async function deleteProfil() {
     let loggedUser = API.retrieveLoggedUser();
     if (loggedUser) {
@@ -252,21 +273,26 @@ async function deleteProfil() {
             renderError("Un problème est survenu.");
     }
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Views rendering
 function showWaitingGif() {
     eraseContent();
     $("#content").append($("<div class='waitingGifcontainer'><img class='waitingGif' src='images/Loading_icon.gif' /></div>'"));
 }
+
 function eraseContent() {
     $("#content").empty();
 }
+
 function saveContentScrollPosition() {
     contentScrollPosition = $("#content")[0].scrollTop;
 }
+
 function restoreContentScrollPosition() {
     $("#content")[0].scrollTop = contentScrollPosition;
 }
+
 async function renderError(message) {
     noTimeout();
     switch (API.currentStatus) {
@@ -277,9 +303,14 @@ async function renderError(message) {
             await API.logout();
             renderLoginForm();
             break;
-        case 404: message = "Ressource introuvable..."; break;
-        case 409: message = "Ressource conflictuelle..."; break;
-        default: if (!message) message = "Un problème est survenu...";
+        case 404:
+            message = "Ressource introuvable...";
+            break;
+        case 409:
+            message = "Ressource conflictuelle...";
+            break;
+        default:
+            if (!message) message = "Un problème est survenu...";
     }
     saveContentScrollPosition();
     eraseContent();
@@ -314,6 +345,7 @@ async function renderError(message) {
         `)
     ); */
 }
+
 function renderAbout() {
     timeout();
     saveContentScrollPosition();
@@ -340,6 +372,7 @@ function renderAbout() {
             </div>
         `))
 }
+
 async function renderPhotos() {
     timeout();
     showWaitingGif();
@@ -353,13 +386,18 @@ async function renderPhotos() {
         renderLoginForm();
     }
 }
+
 async function renderPhotosList() {
     eraseContent();
     $("#newPhotoCmd").show();
-    $("#content").append("<h2> En contruction </h2>");
+    $("#content").append("<h2> En contruction </h2><br><button class='modifyButton' data-photo-id='eaefb490-99f1-11ee-90d3-114082fc2e65'>modifier</button>");
+    $(".modifyButton").on("click", (event) => {
+        let photoId = $(event.currentTarget).data("photo-id")
+        renderModifyPhoto(photoId)
+    })
 }
 
-async function renderCreatePhoto(){
+async function renderCreatePhoto() {
     timeout()
     eraseContent()
     UpdateHeader("Ajout de photos", "createPhoto");
@@ -404,10 +442,10 @@ async function renderCreatePhoto(){
     `);
     initFormValidation()
     initImageUploaders();
-    $("#abortCreatePhotoCmd").on("click",renderPhotosList)
-    $("#createPhotoForm").on("submit",async (event) => {
+    $("#abortCreatePhotoCmd").on("click", renderPhotosList)
+    $("#createPhotoForm").on("submit", async (event) => {
         let data = getFormData($("#createPhotoForm"))
-        data["Shared"] = $("#Shared").is("checked")
+        data["Shared"] = $("#Shared").prop("checked")
         data['OwnerId'] = API.retrieveLoggedUser().Id
 
         event.preventDefault()
@@ -415,11 +453,84 @@ async function renderCreatePhoto(){
         console.log(data)
         if (await API.CreatePhoto(data)) {
             renderPhotosList()
-        }
-        else {
+        } else {
             renderError("Un problème est survenu.");
         }
     })
+}
+
+function renderModifyPhoto(photoId) {
+    timeout()
+    showWaitingGif()
+    API.GetPhotosById(photoId).then(
+        (photo) => {
+            console.log(photo)
+            eraseContent()
+            UpdateHeader("Modification de photo", "updatePhoto");
+            $("#newPhotoCmd").hide()
+            $("#content").append(`
+            <br>
+            <form class="form" id="modifyPhotoForm">
+                <fieldset>
+                    <legend>Informations</legend>
+                    <input class="form-control" 
+                           type="text"
+                           name="Title"
+                           id="Title"
+                           placeholder="Titre"
+                           required
+                           value="${photo.Title}">
+                    <textarea class="form-control"
+                              name="Description"
+                              id="Description"
+                              placeholder="Description"
+                              rows="4"
+                              required>${photo.Description}</textarea>
+                    <input 
+                           type="checkbox"
+                           name="Share"
+                           id="Shared"
+                           ${photo.Shared ? 'checked' : ''}>
+                    <label for="Share" style="user-select: none"  >Partagée</label>
+                </fieldset>
+                <fieldset>
+                    <legend>Image</legend>
+                    <div class='imageUploader' 
+                         newImage='true' 
+                         controlId='Image' 
+                         imageSrc='${photo.Image}' 
+                         waitingImage="images/Loading_icon.gif">
+                    </div>
+                </fieldset>
+                <input type='submit' name='submit' id='savePhoto' value="Enregistrer" class="form-control btn-primary">
+            </form>
+    <div class="cancel">
+        <button class="form-control btn-secondary" id="abortModifyPhotoCmd">Annuler</button>
+    </div>
+           `);
+            initFormValidation()
+            initImageUploaders();
+            $("#abortModifyPhotoCmd").on("click", renderPhotosList)
+            $("#modifyPhotoForm").on("submit", async (event) => {
+                let data = getFormData($("#modifyPhotoForm"))
+                photo.Image = data.Image
+                photo.Description = data.Description
+                photo.Title = data.Title
+                photo.Shared = $("#Shared").prop("checked")
+                console.log(photo)
+                event.preventDefault()
+                showWaitingGif()
+                if (await API.UpdatePhoto(photo)) {
+                    renderPhotosList()
+                } else {
+                    renderError("Un problème est survenu.");
+                }
+            })
+        }
+    ).catch(
+        renderError("Un problème est survenu.")
+    )
+
 }
 
 function renderVerify() {
@@ -449,6 +560,7 @@ function renderVerify() {
         verify(verifyForm.Code);
     });
 }
+
 function renderCreateProfil() {
     noTimeout();
     eraseContent();
@@ -539,6 +651,7 @@ function renderCreateProfil() {
         createProfil(profil);
     });
 }
+
 async function renderManageUsers() {
     timeout();
     let loggedUser = API.retrieveLoggedUser();
@@ -600,6 +713,7 @@ async function renderManageUsers() {
     } else
         renderLoginForm();
 }
+
 async function renderConfirmDeleteAccount(userId) {
     timeout();
     let loggedUser = API.retrieveLoggedUser();
@@ -640,6 +754,7 @@ async function renderConfirmDeleteAccount(userId) {
         }
     }
 }
+
 function renderEditProfilForm() {
     timeout();
     let loggedUser = API.retrieveLoggedUser();
@@ -741,6 +856,7 @@ function renderEditProfilForm() {
         });
     }
 }
+
 function renderConfirmDeleteProfil() {
     timeout();
     let loggedUser = API.retrieveLoggedUser();
@@ -764,12 +880,14 @@ function renderConfirmDeleteProfil() {
         $('#cancelDeleteProfilCmd').on('click', renderEditProfilForm);
     }
 }
+
 function renderExpiredSession() {
     noTimeout();
     loginMessage = "Votre session est expirée. Veuillez vous reconnecter.";
     logout();
     renderLoginForm();
 }
+
 function renderLoginForm() {
     noTimeout();
     eraseContent();
@@ -813,10 +931,11 @@ function renderLoginForm() {
         login(credential);
     });
 }
+
 function getFormData($form) {
     const removeTag = new RegExp("(<[a-zA-Z0-9]+>)|(</[a-zA-Z0-9]+>)", "g");
     var jsonObject = {};
-    console.log($form.serializeArray());
+    //console.log($form.serializeArray());
     $.each($form.serializeArray(), (index, control) => {
         jsonObject[control.name] = control.value.replace(removeTag, "");
     });
