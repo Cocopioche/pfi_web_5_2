@@ -76,6 +76,25 @@
     grid-template-columns: auto 95px;
     align-items: center;
 }
+.photoTitleContainer .photoIcons {
+    display: none;
+}
+
+.photoTitleContainer:hover .photoIcons {
+    display: flex; /* or inline-block, depending on your preferred layout */
+}
+.photoLayout {
+    position: relative;
+}
+
+.photoIcons {
+
+    display: none;
+}
+
+.photoLayout:hover .photoIcons {
+    display: flex; /* or inline-block, depending on your preferred layout */
+}
 .likesSummary {
     display:grid;
     grid-template-columns: 60px 30px;

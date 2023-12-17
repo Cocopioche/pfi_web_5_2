@@ -373,6 +373,7 @@ function renderAbout() {
         `))
 }
 
+
 async function renderPhotos() {
     timeout();
     showWaitingGif();
@@ -390,22 +391,47 @@ async function renderPhotos() {
 async function renderPhotosList() {
     eraseContent();
     $("#newPhotoCmd").show();
-    $("#content").append("<h2> En contruction </h2><br>" +
-        "<button class='modifyButton' data-photo-id='15d2c8d1-9af3-11ee-a522-372389a59be3'>modifier</button>" +
-        "<button class='deleteButton' data-photo-id='15d2c8d1-9af3-11ee-a522-372389a59be3'>delete</button>" +
-        "<button class='detailButton' data-photo-id='15d2c8d1-9af3-11ee-a522-372389a59be3'>detail</button>");
-    $(".modifyButton").on("click", (event) => {
-        let photoId = $(event.currentTarget).data("photo-id")
-        renderModifyPhoto(photoId)
-    })
-    $(".deleteButton").on("click", (event) => {
-        let photoId = $(event.currentTarget).data("photo-id")
-        renderDeletePhoto(photoId)
-    })
-    $(".detailButton").on("click", (event) => {
-        let photoId = $(event.currentTarget).data("photo-id")
-        renderDetailPhoto(photoId)
-    })
+
+    let photos = await API.GetPhotos();
+
+    if (API.error) {
+        console.log("OH NOOOOOOOOO");
+    } else {
+        let photosContainer = $("#content").append(`
+        <div class="photosLayout"> </div>`)
+
+        console.log(photos);
+        photos.data.forEach(photo => renderPhoto(photo));
+    }
+
+}
+async function renderPhoto(photo) {
+    console.log(photo);
+
+    let owner = photo.Owner;
+
+    console.log(owner.Avatar)
+    $('#content').find('.photosLayout').append(`
+        <div class="photoLayout">
+            <div class="photoTitleContainer">
+                <div class="photoTitle">${photo.Title}</div>
+                <span class="photoIcons">
+                    <i class="cmdIcon fas fa-edit fa-2x" title="Modify" onclick="renderModifyPhoto('${photo.Id}')"></i>
+                    <i class="cmdIcon fas fa-trash-alt fa-2x"   title="Delete" onclick="renderDeletePhoto('${photo.Id}')"></i>
+                </span>
+            </div>
+
+            <div class="UserAvatarSmall" id="avatar" style="background-image:url('${owner.Avatar}'); border: 1px solid white;" title="${owner.Name}"></div>
+            <div class="photoImage" style="background-image: url(${photo.Image})"></div>
+            
+            <div class="photoTitleContainer">
+                <div class="photoCreationDate">
+                    <div class="creationText">${convertToFrenchDate(photo.Date)}</div>
+                </div>
+                <div class="likesSummary">0 <i class="cmdIcon fa-regular fa-thumbs-up fa-2x"></i></div>
+            </div>
+        </div>
+    `);
 }
 
 async function renderCreatePhoto() {
