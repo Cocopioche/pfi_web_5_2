@@ -416,33 +416,46 @@ async function renderPhoto(photo) {
     let liked = photoLikes.some(like => like.UserId === API.retrieveLoggedUser().Id);
     let thumbsUpIconClass = liked ? "fa" : "fa-regular";
 
+    // Check if the user is an admin or the owner of the photo
+    const isAdmin = API.retrieveLoggedUser().IsAdmin;
+    const isOwner = photo.OwnerId === API.retrieveLoggedUser().Id;
+
+    const uniqueUserIds = [...new Set(photoLikes.map(like => like.UserId))];
+    const uniqueUserNames = await Promise.all(uniqueUserIds.map(userId => getUserNameById(userId)));
+    console.log(uniqueUserIds)
+
+    console.log(uniqueUserNames)
     $('#content').find('.photosLayout').append(`
         <div class="photoLayout" id="${photo.id}" >
             <div class="photoTitleContainer">
                 <div class="photoTitle">${photo.Title}</div>
                 <span class="photoIcons">
-                    <i class="cmdIcon fas fa-edit fa-2x" title="Modify" onclick="renderModifyPhoto('${photo.Id}')"></i>
-                    <i class="cmdIcon fas fa-trash-alt fa-2x" title="Delete" onclick="renderDeletePhoto('${photo.Id}')"></i>
+                    ${isAdmin || isOwner ? `<i class="cmdIcon fas fa-edit fa-2x" title="Modify" onclick="renderModifyPhoto('${photo.Id}')"></i>` : ''}
+                    ${isAdmin || isOwner ? `<i class="cmdIcon fas fa-trash-alt fa-2x" title="Delete" onclick="renderDeletePhoto('${photo.Id}')"></i>` : ''}
                 </span>
             </div>
 
             <div class="photoImage" onclick="renderDetailPhoto('${photo.Id}')" style="background-image: url(${photo.Image})">
-                  <div class="UserAvatarSmall" id="avatar" style="background-image:url('${owner.Avatar}'); " title="${owner.Name}"></div>
+                <div class="UserAvatarSmall" id="avatar" style="background-image:url('${owner.Avatar}'); " title="${owner.Name}"></div>
             </div>
 
             <div class="photoDetailsContainer">
                 <div class="detailsRow">
                     <div class="photoCreationDate">
                         <div class="creationText">${convertToFrenchDate(photo.Date)}</div>
-                        <div class="likesSummary" onclick="likePhoto('${photo.Id}', '${API.retrieveLoggedUser().Id}')" id="${photo.Id}-Likes">
-                        ${photoLikes.length} <i class="cmdIcon ${thumbsUpIconClass} fa-thumbs-up fa-2x" title="Horhor"></i>
+                        <div class="likesSummary" id="${photo.Id}-Likes" title="${uniqueUserNames.join(', ')}">
+                        ${photoLikes.length} <i class="cmdIcon ${thumbsUpIconClass} fa-thumbs-up fa-2x"></i>
                     </div>
                     </div>
-                    
                 </div>
             </div>
         </div>
     `);
+}
+
+async function getUserNameById(userId) {
+    const userData = await API.GetAccount(userId);
+    return userData.Name;
 }
 
 
