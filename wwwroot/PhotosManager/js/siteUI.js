@@ -456,32 +456,31 @@ async function renderPhotos() {
 }
 
 
-async function renderPhotosList() {
-    async function renderPhotosList(sortFunction = null) {
-        eraseContent();
-        $("#newPhotoCmd").show();
+async function renderPhotosList(sortFunction = null) {
+    eraseContent();
+    $("#newPhotoCmd").show();
 
-        let photos = await API.GetPhotos();
-        photos = photos.data
-        if (sortFunction !== null) {
-            photos = sortFunction(photos)
-        }
+    let photos = await API.GetPhotos();
+    photos = photos.data
+    if (sortFunction !== null) {
+        photos = sortFunction(photos)
+    }
 
-        if (API.error) {
-            console.log("OH NOOOOOOOOO");
-        } else {
-            let photosContainer = $("#content").append(`
+    if (API.error) {
+        console.log("OH NOOOOOOOOO");
+    } else {
+        let photosContainer = $("#content").append(`
         <div class="photosLayout"> </div>`)
 
-            photos.forEach(photo => {
-                // Check if the photo belongs to the logged-in user or if it's shared
-                if (photo.OwnerId === API.retrieveLoggedUser().Id || photo.Shared) {
-                    renderPhoto(photo);
-                }
-            });
-        }
+        photos.forEach(photo => {
+            // Check if the photo belongs to the logged-in user or if it's shared
+            if (photo.OwnerId === API.retrieveLoggedUser().Id || photo.Shared) {
+                renderPhoto(photo);
+            }
+        });
     }
 }
+
 
 async function renderPhoto(photo) {
     let owner = photo.Owner;
