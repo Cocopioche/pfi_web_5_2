@@ -494,9 +494,9 @@ async function renderPhoto(photo) {
 
     const uniqueUserIds = [...new Set(photoLikes.map(like => like.UserId))];
     const uniqueUserNames = await Promise.all(uniqueUserIds.map(userId => getUserNameById(userId)));
-    console.log(uniqueUserIds)
-
+    console.log(photoLikes)
     console.log(uniqueUserNames)
+
     $('#content').find('.photosLayout').append(`
         <div class="photoLayout" id="${photo.id}" >
             <div class="photoTitleContainer">
