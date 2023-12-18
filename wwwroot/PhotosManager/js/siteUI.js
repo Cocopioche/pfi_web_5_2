@@ -154,6 +154,7 @@ function loggedUserMenu() {
 function viewMenu(viewName) {
     if (viewName == "photosList") {
         return "" +
+            "<div class=\"dropdown-divider\"></div>" +
             "    <span class=\"dropdown-item\" id=\"sortByDateCmd\">\n" +
             "        <i class=\"menuIcon fa fa-check mx-2\"></i>\n" +
             "        <i class=\"menuIcon fa fa-calendar mx-2\"></i>\n" +
@@ -173,8 +174,7 @@ function viewMenu(viewName) {
             "        <i class=\"menuIcon fa fa-fw mx-2\"></i>\n" +
             "        <i class=\"menuIcon fa fa-user mx-2\"></i>\n" +
             "        Mes photos\n" +
-            "    </span>\n" +
-            "    `";
+            "    </span>\n"
     } else
         return "";
 }
