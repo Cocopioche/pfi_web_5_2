@@ -74,7 +74,7 @@ function attachCmd() {
     $('#renderManageUsersMenuCmd').on('click', renderManageUsers);
     $('#editProfilCmd').on('click', renderEditProfilForm);
     $('#aboutCmd').on("click", renderAbout);
-    $("#newPhotoCmd").on("click", renderCreatePhoto);
+    $("#newPhotoCmd").on("click", () => {renderCreatePhoto()});
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -453,7 +453,8 @@ async function likePhoto(photoId, userId) {
 }
 
 
-async function renderCreatePhoto() {
+async function renderCreatePhoto(title = "",description = "",imageError = "") {
+    console.log(title)
     timeout()
     eraseContent()
     UpdateHeader("Ajout de photos", "createPhoto");
@@ -468,13 +469,14 @@ async function renderCreatePhoto() {
                    name="Title"
                    id="Title"
                    placeholder="Titre"
+                   value="${title}"
                    required>
             <textarea class="form-control"
                       name="Description"
                       id="Description"
                       placeholder="Description"
                       rows="4"
-                      required></textarea>
+                      required>${description}</textarea>
             <input 
                    type="checkbox"
                    name="Share"
@@ -490,6 +492,7 @@ async function renderCreatePhoto() {
                  waitingImage="images/Loading_icon.gif">
             </div>
         </fieldset>
+        <div id="imageError" class="errorContainer">${imageError}</div>
         <input type='submit' name='submit' id='savePhoto' value="Enregistrer" class="form-control btn-primary">
     </form>
     <div class="cancel">
@@ -504,7 +507,10 @@ async function renderCreatePhoto() {
         data["Shared"] = $("#Shared").prop("checked")
         data['OwnerId'] = API.retrieveLoggedUser().Id
         data['Likes'] = [];
-
+        if (data.Image === ""){
+            renderCreatePhoto(data.Title,data.Description,"L'image est vide")
+            return
+        }
         event.preventDefault()
         showWaitingGif()
         console.log(data)
