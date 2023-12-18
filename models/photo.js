@@ -13,6 +13,8 @@ export default class Photo extends Model {
         this.addField('Image', 'asset');
         this.addField('Date','integer');
         this.addField('Shared','boolean');
+       // this.addField('Likes','array');
+
 
         this.setKey("Title");
     }
@@ -21,7 +23,11 @@ export default class Photo extends Model {
         instance = super.bindExtraData(instance);
         let usersRepository = new Repository(new UserModel());
         instance.Owner = usersRepository.get(instance.OwnerId);
-        instance.OwnerName = instance.Owner.Name;
+        if (instance.Owner != null) {
+            instance.OwnerName = instance.Owner.Name;
+            instance.Likes = [];
+        }
+
         return instance;
     }
 }

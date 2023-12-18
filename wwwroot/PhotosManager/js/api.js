@@ -5,7 +5,7 @@
 
 const serverHost = "http://localhost:5000";
 const photos_API = "/api/photos";
-const photoLikes_API = "/api/photolikes";
+//const photoLikes_API = "/api/photolikes";
 class API {
     static initHttpState() {
         this.currentHttpError = "";
@@ -225,6 +225,32 @@ class API {
                 url: serverHost + photos_API + "/" + id,
                 type: 'GET',
                 headers: API.getBearerAuthorizationToken(),
+                success: data => { resolve(data); },
+                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
+            });
+        });
+    }
+    // static GetLikesById(photoId) {
+    //     API.initHttpState();
+    //     return new Promise(resolve => {
+    //         $.ajax({
+    //             url: serverHost + photoLikes_API + "/" + photoId,
+    //             type: 'GET',
+    //             headers: API.getBearerAuthorizationToken(),
+    //             success: data => { resolve(data); },
+    //             error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
+    //         });
+    //     });
+    // }
+    static LikePhoto(photo, photoId, userId) {
+        API.initHttpState();
+        return new Promise(resolve => {
+            $.ajax({
+                url: `${serverHost}/api/photos/like`, ///${photoId}/${userId}
+                type: 'POST',
+                headers: API.getBearerAuthorizationToken(),
+                contentType: 'application/json',
+                data: JSON.stringify(photo), //data: JSON.stringify({ userId: userId, photoId: photoId }),
                 success: data => { resolve(data); },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
