@@ -492,11 +492,6 @@ async function renderPhoto(photo) {
     const isAdmin = API.retrieveLoggedUser().IsAdmin;
     const isOwner = photo.OwnerId === API.retrieveLoggedUser().Id;
 
-    const uniqueUserIds = [...new Set(photoLikes.map(like => like.UserId))];
-    const uniqueUserNames = await Promise.all(uniqueUserIds.map(userId => getUserNameById(userId)));
-    console.log(photoLikes)
-    console.log(uniqueUserNames)
-
     $('#content').find('.photosLayout').append(`
         <div class="photoLayout" id="${photo.id}" >
             <div class="photoTitleContainer">
@@ -515,7 +510,7 @@ async function renderPhoto(photo) {
                 <div class="detailsRow">
                     <div class="photoCreationDate">
                         <div class="creationText">${convertToFrenchDate(photo.Date)}</div>
-                        <div class="likesSummary" id="${photo.Id}-Likes" title="${uniqueUserNames.join(', ')}">
+                        <div class="likesSummary" id="${photo.Id}-Likes" title="Like">
                         ${photoLikes.length} <i class="cmdIcon ${thumbsUpIconClass} fa-thumbs-up fa-2x"></i>
                     </div>
                     </div>
@@ -526,12 +521,12 @@ async function renderPhoto(photo) {
         </div>
     </div>
 `);
+
+    $(`#${photo.Id}-Likes i`).on('click', function() {
+        likePhoto(photo.Id, API.retrieveLoggedUser().Id);
+    });
 }
 
-async function getUserNameById(userId) {
-    const userData = await API.GetAccount(userId); //
-    return userData.Name;
-}
 
 
 async function likePhoto(photoId, userId) {
@@ -555,13 +550,17 @@ async function likePhoto(photoId, userId) {
 
             likeCounter++;  // Increase the like counter
         } else {
-
             thumbsUpIconClass = "fa-regular"
             //likeCounter--;  // Decrease the like counter
         }
 
+        console.log(thumbsUpIconClass)
         // Update the like counter in the DOM
         $(`#${photo.Id}-Likes`).html(`${likeCounter} <i class="cmdIcon ${thumbsUpIconClass} fa-thumbs-up fa-2x" title="Horhor"></i>`);
+
+        $(`#${photo.Id}-Likes i`).on('click', function() {
+            likePhoto(photo.Id, API.retrieveLoggedUser().Id);
+        });
     });
 }
 

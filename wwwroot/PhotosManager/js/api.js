@@ -5,6 +5,7 @@
 
 const serverHost = "http://localhost:5000";
 const photos_API = "/api/photos";
+
 //const photoLikes_API = "/api/photolikes";
 class API {
     static initHttpState() {
@@ -206,6 +207,7 @@ class API {
             });
         });
     }
+
     static GetPhotosETag() {
         API.initHttpState();
         return new Promise(resolve => {
