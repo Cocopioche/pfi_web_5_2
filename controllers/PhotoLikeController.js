@@ -6,12 +6,33 @@ import Controller from './Controller.js';
 import {nowInSeconds} from "../utilities.js";
 import TokenManager from "../tokensManager.js";
 
-export default class Likes extends Controller {
+export default class PhotoLikeController extends Controller {
     constructor(HttpContext) {
-        super(HttpContext, new Repository(new PhotoModel()), Authorizations.user());
+        super(HttpContext, new Repository(new PhotoLikeModel()), Authorizations.user());
         this.photoLikesRepository = new Repository(new PhotoLikeModel());
     }
     like(Horhor) {
+        let userId = Horhor.userId;
+        let photoId = Horhor.photoId;
+
+
+        if (userId && photoId) {
+            let likeId = photoId+userId
+            let photoLike = this.photoLikesRepository.findByField("LikeId",  likeId)
+
+
+            if (photoLike) {
+                this.photoLikesRepository.remove(photoLike.Id);
+                this.HttpContext.response.accepted("Photo unliked successfully.");
+            } else {
+                this.photoLikesRepository.add({ PhotoId: photoId, UserId: userId, LikeId: likeId });
+                this.HttpContext.response.accepted("Photo liked successfully.");
+            }
+        } else {
+            this.HttpContext.response.badRequest("UserId or PhotoId is not specified.");
+        }
+    }
+    post(Horhor) {
         let userId = Horhor.userId;
         let photoId = Horhor.photoId;
 
@@ -51,9 +72,5 @@ export default class Likes extends Controller {
         } else {
             this.HttpContext.response.badRequest("UserId or PhotoId is not specified.");
         }
-    }
-    post(data) {
-        data["Date"] = nowInSeconds()
-        super.post(data);
     }
 }

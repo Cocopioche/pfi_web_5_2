@@ -230,18 +230,6 @@ class API {
             });
         });
     }
-    // static GetLikesById(photoId) {
-    //     API.initHttpState();
-    //     return new Promise(resolve => {
-    //         $.ajax({
-    //             url: serverHost + photoLikes_API + "/" + photoId,
-    //             type: 'GET',
-    //             headers: API.getBearerAuthorizationToken(),
-    //             success: data => { resolve(data); },
-    //             error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
-    //         });
-    //     });
-    // }
     static LikePhoto(photoId, userId) {
         API.initHttpState();
         return new Promise(resolve => {
@@ -253,6 +241,18 @@ class API {
                 data: JSON.stringify({ userId: userId, photoId: photoId }), //data: JSON.stringify({ userId: userId, photoId: photoId }),
                 success: data => { resolve(data); },
                 error: xhr => { API.setHttpErrorState(xhr); resolve("ERREUR"); }
+            });
+        });
+    }
+    static GetPhotoLikes(photoId) {
+        API.initHttpState();
+        return new Promise(resolve => {
+            $.ajax({
+                url: serverHost + `/api/photoLike?PhotoId=${photoId}`,
+                type: 'GET',
+                headers: API.getBearerAuthorizationToken(),
+                success: data => { resolve(data); },
+                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
         });
     }
