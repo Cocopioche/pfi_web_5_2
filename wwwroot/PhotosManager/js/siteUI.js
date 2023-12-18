@@ -104,22 +104,18 @@ function attachCmd() {
 }
 
 function sortByDate(photos) {
-    photos = photos
-    return photos.sort((a, b) => a.Date - b.Date)
+    return photos.sort((a, b) => b.Date - a.Date)
 }
 
 function sortByOwners(photos) {
-    photos = photos
     return photos.sort((a, b) => a.OwnerId.localeCompare(b.OwnerId));
 }
 
 function sortByLikes(photos) {
-    //TODO
-    return photos
+    return photos.sort(async (a, b) => await API.GetPhotoLikes(b.Id) - await API.GetPhotoLikes(a.Id));
 }
 
 function sortByMe(photos) {
-    photos = photos
     myId = API.retrieveLoggedUser().Id
     return photos.filter(photo => photo.OwnerId === myId);
 }
@@ -158,6 +154,7 @@ function loggedUserMenu() {
 function viewMenu(viewName) {
     if (viewName == "photosList") {
         return "" +
+            "<div class=\"dropdown-divider\"></div>" +
             "    <span class=\"dropdown-item\" id=\"sortByDateCmd\">\n" +
             "        <i class=\"menuIcon fa fa-check mx-2\"></i>\n" +
             "        <i class=\"menuIcon fa fa-calendar mx-2\"></i>\n" +
@@ -177,8 +174,7 @@ function viewMenu(viewName) {
             "        <i class=\"menuIcon fa fa-fw mx-2\"></i>\n" +
             "        <i class=\"menuIcon fa fa-user mx-2\"></i>\n" +
             "        Mes photos\n" +
-            "    </span>\n" +
-            "    `";
+            "    </span>\n"
     } else
         return "";
 }
