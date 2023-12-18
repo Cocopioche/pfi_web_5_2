@@ -75,6 +75,47 @@ function attachCmd() {
     $('#editProfilCmd').on('click', renderEditProfilForm);
     $('#aboutCmd').on("click", renderAbout);
     $("#newPhotoCmd").on("click", () => {renderCreatePhoto()});
+
+    $("#sortByDateCmd").click(() => {
+        $(".fa-check").removeClass("menuIcon fa-check mx-2").addClass("menuIcon fa-fw mx-2");
+        $("#sortByDateCmd .fa-fw").removeClass("menuIcon fa-fw mx-2").addClass("menuIcon fa-check mx-2");
+        renderPhotosList((photos) => sortByDate(photos))
+    });
+
+    $("#sortByOwnersCmd").click(() => {
+        $(".fa-check").removeClass("menuIcon fa-check mx-2").addClass("menuIcon fa-fw mx-2");
+        $("#sortByOwnersCmd .fa-fw").removeClass("menuIcon fa-fw mx-2").addClass("menuIcon fa-check mx-2");
+        renderPhotosList((photos) => sortByOwners(photos));
+    });
+
+    $("#sortByLikesCmd").click(() => {
+        $(".fa-check").removeClass("menuIcon fa-check mx-2").addClass("menuIcon fa-fw mx-2");
+        $("#sortByLikesCmd .fa-fw").removeClass("menuIcon fa-fw mx-2").addClass("menuIcon fa-check mx-2");
+        renderPhotosList((photos) => sortByLikes(photos));
+    });
+
+    $("#ownerOnlyCmd").click(() => {
+        $(".fa-check").removeClass("menuIcon fa-check mx-2").addClass("menuIcon fa-fw mx-2");
+        $("#ownerOnlyCmd .fa-fw").removeClass("menuIcon fa-fw mx-2").addClass("menuIcon fa-check mx-2");
+        renderPhotosList((photos) => sortByMe(photos));
+    });
+}
+function sortByDate(photos){
+    photos = photos
+    return photos.sort((a,b) => a.Date - b.Date)
+}
+function sortByOwners(photos) {
+    photos = photos
+    return photos.sort((a, b) => a.OwnerId.localeCompare(b.OwnerId));
+}
+function sortByLikes(photos){
+    //TODO
+    return photos
+}
+function sortByMe(photos){
+    photos = photos
+    myId = API.retrieveLoggedUser().Id
+    return photos.filter(photo => photo.OwnerId === myId);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,8 +151,28 @@ function loggedUserMenu() {
 
 function viewMenu(viewName) {
     if (viewName == "photosList") {
-        // todo
-        return "";
+        return "" +
+            "    <span class=\"dropdown-item\" id=\"sortByDateCmd\">\n" +
+            "        <i class=\"menuIcon fa fa-check mx-2\"></i>\n" +
+            "        <i class=\"menuIcon fa fa-calendar mx-2\"></i>\n" +
+            "        Photos par date de création\n" +
+            "    </span>\n" +
+            "    <span class=\"dropdown-item\" id=\"sortByOwnersCmd\">\n" +
+            "        <i class=\"menuIcon fa fa-fw mx-2\"></i>\n" +
+            "        <i class=\"menuIcon fa fa-users mx-2\"></i>\n" +
+            "        Photos par créateur\n" +
+            "    </span>\n" +
+            "    <span class=\"dropdown-item\" id=\"sortByLikesCmd\">\n" +
+            "        <i class=\"menuIcon fa fa-fw mx-2\"></i>\n" +
+            "        <i class=\"menuIcon fa fa-user mx-2\"></i>\n" +
+            "        Photos les plus aiméés\n" +
+            "    </span>\n" +
+            "    <span class=\"dropdown-item\" id=\"ownerOnlyCmd\">\n" +
+            "        <i class=\"menuIcon fa fa-fw mx-2\"></i>\n" +
+            "        <i class=\"menuIcon fa fa-user mx-2\"></i>\n" +
+            "        Mes photos\n" +
+            "    </span>\n" +
+            "    `";
     } else
         return "";
 }
@@ -388,11 +449,15 @@ async function renderPhotos() {
     }
 }
 
-async function renderPhotosList() {
+async function renderPhotosList(sortFunction = null) {
     eraseContent();
     $("#newPhotoCmd").show();
 
     let photos = await API.GetPhotos();
+    photos = photos.data
+    if (sortFunction !== null){
+        photos = sortFunction(photos)
+    }
 
     if (API.error) {
         console.log("OH NOOOOOOOOO");
@@ -400,8 +465,7 @@ async function renderPhotosList() {
         let photosContainer = $("#content").append(`
         <div class="photosLayout"> </div>`)
 
-        console.log(photos);
-        photos.data.forEach(photo => renderPhoto(photo));
+        photos.forEach(photo => renderPhoto(photo));
     }
 
 }
