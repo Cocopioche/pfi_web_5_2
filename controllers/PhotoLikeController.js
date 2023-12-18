@@ -15,6 +15,9 @@ export default class PhotoLikeController extends Controller {
         let userId = Horhor.userId;
         let photoId = Horhor.photoId;
 
+        this.HttpContext.response.setHeader("Cache-Control", "no-store");
+        this.HttpContext.response.setHeader("Pragma", "no-cache");
+        this.HttpContext.response.setHeader("Expires", "0");
 
         if (userId && photoId) {
             let likeId = photoId+userId
@@ -24,13 +27,22 @@ export default class PhotoLikeController extends Controller {
             if (photoLike) {
                 this.photoLikesRepository.remove(photoLike.Id);
                 this.HttpContext.response.accepted("Photo unliked successfully.");
+
             } else {
                 this.photoLikesRepository.add({ PhotoId: photoId, UserId: userId, LikeId: likeId });
+                photoLike = this.photoLikesRepository.findByField("LikeId",  likeId);
                 this.HttpContext.response.accepted("Photo liked successfully.");
             }
+            this.photoLikesRepository.update(photoLike.Id, photoLike);
+
+            this.HttpContext.response.updated(photoLike);
+            this.repository.update(photoLike.Id, photoLike);
+
+            this.HttpContext.response.updated(photoLike);
         } else {
             this.HttpContext.response.badRequest("UserId or PhotoId is not specified.");
         }
+
     }
     post(Horhor) {
         let userId = Horhor.userId;

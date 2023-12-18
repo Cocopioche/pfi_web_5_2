@@ -534,24 +534,25 @@ async function likePhoto(photoId, userId) {
     let photoLikes = await API.GetPhotoLikes(photo.Id);
 
     API.LikePhoto(photoId, userId).then(response => {
-        let likeCounter = photoLikes.length;
         let liked = photoLikes.some(like => like.UserId === API.retrieveLoggedUser().Id);
         let thumbsUpIconClass = liked ? "fa" : "fa-regular";
+        let likeCounter = photoLikes.length;
 
 
         let hasFaClass = $(`#${photo.Id}-Likes i`).hasClass('fa');
         let hasFaRegularClass = $(`#${photo.Id}-Likes i`).hasClass('fa-regular');
 
 
-        console.log(hasFaClass);
+        console.log(response);
 
         if (!hasFaClass) {
             thumbsUpIconClass = "fa"
 
-            likeCounter++;  // Increase the like counter
+            likeCounter++;
         } else {
             thumbsUpIconClass = "fa-regular"
-            //likeCounter--;  // Decrease the like counter
+            if (likeCounter > 0)
+                likeCounter--;
         }
 
         console.log(thumbsUpIconClass)
