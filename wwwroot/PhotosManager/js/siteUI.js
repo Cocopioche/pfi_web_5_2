@@ -104,25 +104,26 @@ function attachCmd() {
 }
 
 function sortByDate(photos) {
-    return photos.sort((a, b) => b.Date - a.Date)
+    return Promise.resolve(photos.sort((a, b) => b.Date - a.Date));
 }
 
 function sortByOwners(photos) {
-    return photos.sort((a, b) => a.OwnerId.localeCompare(b.OwnerId));
+    return  Promise.resolve(photos.sort((a, b) => a.OwnerId.localeCompare(b.OwnerId)));
 }
 
-function sortByLikes(photos) {
-    return photos.sort(async (a, b) => {
-        const likesA = (await API.GetPhotoLikes(a.Id)).length;
-        const likesB = (await API.GetPhotoLikes(b.Id)).length;
+async function getLikes(photoId) {
+    return (await API.GetPhotoLikes(photoId)).length;
+}
 
-        return likesB - likesA;
-    });
+async function sortByLikes(photos) {
+    const photoLikes = await Promise.all(photos.map(photo => getLikes(photo.Id)));
+
+    return photos.sort((a, b) => photoLikes[photos.indexOf(b)] - photoLikes[photos.indexOf(a)]);
 }
 
 function sortByMe(photos) {
     myId = API.retrieveLoggedUser().Id
-    return photos.filter(photo => photo.OwnerId === myId);
+    return  Promise.resolve(photos.filter(photo => photo.OwnerId === myId));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -464,9 +465,8 @@ async function renderPhotosList(sortFunction = sortByDate) {
     let photos = await API.GetPhotos();
     photos = photos.data
     if (sortFunction !== null) {
-        photos = sortFunction(photos)
+        photos = await sortFunction(photos)
     }
-
     if (API.error) {
         console.log("OH NOOOOOOOOO");
     } else {
@@ -621,7 +621,7 @@ async function renderCreatePhoto(title = "", description = "", imageError = "") 
 `);
     initFormValidation()
     initImageUploaders();
-    $("#abortCreatePhotoCmd").on("click", renderPhotosList)
+    $("#abortCreatePhotoCmd").on("click", renderPhotos)
     $("#createPhotoForm").on("submit", async (event) => {
         let data = getFormData($("#createPhotoForm"))
         data["Shared"] = $("#Shared").prop("checked")
@@ -635,7 +635,7 @@ async function renderCreatePhoto(title = "", description = "", imageError = "") 
         showWaitingGif()
         console.log(data)
         if (await API.CreatePhoto(data)) {
-            renderPhotosList()
+            renderPhotos()
         } else {
             renderError("Un problème est survenu.");
         }
@@ -692,7 +692,7 @@ function renderModifyPhoto(photoId) {
        `);
             initFormValidation()
             initImageUploaders();
-            $("#abortModifyPhotoCmd").on("click", renderPhotosList)
+            $("#abortModifyPhotoCmd").on("click", renderPhotos)
             $("#modifyPhotoForm").on("submit", async (event) => {
                 let data = getFormData($("#modifyPhotoForm"))
                 photo.Image = data.Image
@@ -702,7 +702,7 @@ function renderModifyPhoto(photoId) {
                 event.preventDefault()
                 showWaitingGif()
                 if (await API.UpdatePhoto(photo)) {
-                    renderPhotosList()
+                    renderPhotos()
                 } else {
                     renderError("Un problème est survenu.");
                 }
@@ -737,20 +737,20 @@ function renderDeletePhoto(photoId) {
         </div>
        `);
             $("#cancelDeletePhotoCmd").on("click", () => {
-                renderPhotosList()
+                renderPhotos()
             })
             $("#deletePhotoCmd").on("click", () => {
                 showWaitingGif()
                 API.DeletePhoto(photoId).then(
-                    renderPhotosList
+                    renderPhotos
                 ).catch(() => {
-                    renderPhotosList();
+                    renderPhotos();
                     //renderError("Un problème est survenu.")
                 })
             })
         }
     ).catch(() => {
-        renderPhotosList();
+        renderPhotos();
         renderError("Un problème est survenu.")
     })
 }
