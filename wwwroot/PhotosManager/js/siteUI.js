@@ -104,22 +104,18 @@ function attachCmd() {
 }
 
 function sortByDate(photos) {
-    photos = photos
-    return photos.sort((a, b) => a.Date - b.Date)
+    return photos.sort((a, b) => b.Date - a.Date)
 }
 
 function sortByOwners(photos) {
-    photos = photos
     return photos.sort((a, b) => a.OwnerId.localeCompare(b.OwnerId));
 }
 
 function sortByLikes(photos) {
-    //TODO
-    return photos
+    return photos.sort(async (a, b) => await API.GetPhotoLikes(b.Id) - await API.GetPhotoLikes(a.Id));
 }
 
 function sortByMe(photos) {
-    photos = photos
     myId = API.retrieveLoggedUser().Id
     return photos.filter(photo => photo.OwnerId === myId);
 }
