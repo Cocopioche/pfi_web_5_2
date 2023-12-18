@@ -37,6 +37,10 @@ export default class CachedRequestsManager {
         if (url != "")
             CachedRequests = CachedRequests.filter(endpoint => endpoint.url.toLowerCase().indexOf(url.toLowerCase()) == -1);
     }
+    static clearBypass() {
+        CachedRequests = CachedRequests.filter(endpoint => endpoint.Expire_Time > endpoint.Expire_Time - 10);
+        CachedRequests = [];
+    }
     static flushExpired() {
         let now = utilities.nowInSeconds();
         for (let endpoint of CachedRequests) {

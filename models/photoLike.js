@@ -16,6 +16,12 @@ export default class PhotoLike extends Model {
     }
 
     bindExtraData(instance) {
+        instance = super.bindExtraData(instance);
+        let usersRepository = new Repository(new UserModel());
+        let likeUser = usersRepository.get(instance.UserId);
+        if (likeUser) {
+            instance.UserName = likeUser.Name;
+        }
 
         return instance;
     }

@@ -5,6 +5,7 @@ import PhotoLikeModel from '../models/photoLike.js';
 import Controller from './Controller.js';
 import {nowInSeconds} from "../utilities.js";
 import TokenManager from "../tokensManager.js";
+import CachedRequests from "../CachedRequestsManager.js";
 
 export default class PhotoLikeController extends Controller {
     constructor(HttpContext) {
@@ -15,9 +16,6 @@ export default class PhotoLikeController extends Controller {
         let userId = Horhor.userId;
         let photoId = Horhor.photoId;
 
-        this.HttpContext.response.setHeader("Cache-Control", "no-store");
-        this.HttpContext.response.setHeader("Pragma", "no-cache");
-        this.HttpContext.response.setHeader("Expires", "0");
 
         if (userId && photoId) {
             let likeId = photoId+userId
@@ -42,7 +40,6 @@ export default class PhotoLikeController extends Controller {
         } else {
             this.HttpContext.response.badRequest("UserId or PhotoId is not specified.");
         }
-
     }
     post(Horhor) {
         let userId = Horhor.userId;
@@ -64,25 +61,7 @@ export default class PhotoLikeController extends Controller {
         } else {
             this.HttpContext.response.badRequest("UserId or PhotoId is not specified.");
         }
+        CachedRequests.clearBypass();
     }
-    deleteLike(photo) {
-        console.log(photo);
 
-        if (userId && photo) {
-            let photo = this.repository.findByField("Id", photo.Id);
-            console.log(photo);
-
-            if (photo.Likes.includes(userId)) {
-                // User has liked the photo before, so unlike it
-                photo.Likes = photo.Likes.filter(id => id !== userId);
-                this.HttpContext.response.accepted("Photo unliked successfully.");
-            } else {
-                // User hasn't liked the photo before, so like it
-                photo.Likes.push(userId);
-                this.HttpContext.response.accepted("Photo liked successfully.");
-            }
-        } else {
-            this.HttpContext.response.badRequest("UserId or PhotoId is not specified.");
-        }
-    }
 }

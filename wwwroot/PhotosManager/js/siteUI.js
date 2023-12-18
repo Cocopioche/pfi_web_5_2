@@ -112,7 +112,12 @@ function sortByOwners(photos) {
 }
 
 function sortByLikes(photos) {
-    return photos.sort(async (a, b) => await API.GetPhotoLikes(b.Id) - await API.GetPhotoLikes(a.Id));
+    return photos.sort(async (a, b) => {
+        const likesA = (await API.GetPhotoLikes(a.Id)).length;
+        const likesB = (await API.GetPhotoLikes(b.Id)).length;
+
+        return likesB - likesA;
+    });
 }
 
 function sortByMe(photos) {
@@ -500,6 +505,7 @@ async function renderPhoto(photo) {
 
             <div class="photoImage" onclick="renderDetailPhoto('${photo.Id}')" style="background-image: url(${photo.Image})">
                 <div class="UserAvatarSmall" id="avatar" style="background-image:url('${owner.Avatar}'); " title="${owner.Name}"></div>
+${photo.Shared ? `<div class="UserAvatarSmall" id="Shared" style="background-image:url('images/shared.png'); background-color: rgba(255, 255, 255, 0.5);" title="Shared"></div>` : ''}
             </div>
 
             <div class="photoDetailsContainer">
@@ -519,17 +525,23 @@ async function renderPhoto(photo) {
 `);
 
     $(`#${photo.Id}-Likes i`).on('click', function() {
-        likePhoto(photo.Id, API.retrieveLoggedUser().Id);
+        likePhoto(photo.Id, API.retrieveLoggedUser().Id, liked);
     });
 }
 
 
 
-async function likePhoto(photoId, userId) {
+async function likePhoto(photoId, userId, alreadyLiked = false) {
     let photo = await API.GetPhotosById(photoId);
-    let photoLikes = await API.GetPhotoLikes(photo.Id);
+    let photoLikes = await API.GetPhotoLikes(photoId);
 
     API.LikePhoto(photoId, userId).then(response => {
+        API.GetPhotoLikes(photoId).then(updatedLikes => {
+            photoLikes = updatedLikes;
+        });
+
+        console.log(response);
+
         let liked = photoLikes.some(like => like.UserId === API.retrieveLoggedUser().Id);
         let thumbsUpIconClass = liked ? "fa" : "fa-regular";
         let likeCounter = photoLikes.length;
@@ -538,25 +550,24 @@ async function likePhoto(photoId, userId) {
         let hasFaClass = $(`#${photo.Id}-Likes i`).hasClass('fa');
         let hasFaRegularClass = $(`#${photo.Id}-Likes i`).hasClass('fa-regular');
 
-
-        console.log(response);
-
         if (!hasFaClass) {
             thumbsUpIconClass = "fa"
 
-            likeCounter++;
+            if (!alreadyLiked)
+                likeCounter++;
         } else {
             thumbsUpIconClass = "fa-regular"
             if (likeCounter > 0)
                 likeCounter--;
         }
 
-        console.log(thumbsUpIconClass)
-        // Update the like counter in the DOM
-        $(`#${photo.Id}-Likes`).html(`${likeCounter} <i class="cmdIcon ${thumbsUpIconClass} fa-thumbs-up fa-2x" title="Horhor"></i>`);
+        const uniqueUserNames = [...new Set(photoLikes.map(like => like.UserName))];
+        const displayedUserNames = uniqueUserNames.slice(0, 10);
+
+        $(`#${photo.Id}-Likes`).html(`${likeCounter} <i class="cmdIcon ${thumbsUpIconClass} fa-thumbs-up fa-2x" title="${displayedUserNames}"></i>`);
 
         $(`#${photo.Id}-Likes i`).on('click', function() {
-            likePhoto(photo.Id, API.retrieveLoggedUser().Id);
+            likePhoto(photo.Id, API.retrieveLoggedUser().Id, alreadyLiked);
         });
     });
 }
@@ -733,19 +744,26 @@ function renderDeletePhoto(photoId) {
                 API.DeletePhoto(photoId).then(
                     renderPhotosList
                 ).catch(() => {
-                    renderError("Un problème est survenu.")
+                    renderPhotosList();
+                    //renderError("Un problème est survenu.")
                 })
             })
         }
-    ).catch(
+    ).catch(() => {
+        renderPhotosList();
         renderError("Un problème est survenu.")
-    )
+    })
 }
 
 async function renderDetailPhoto(photoId) {
     let loggedUser = API.retrieveLoggedUser()
-
     let likes = await API.GetPhotoLikes(photoId);
+
+    let liked = likes.some(like => like.UserId === API.retrieveLoggedUser().Id);
+    let thumbsUpIconClass = liked ? "fa" : "fa-regular";
+
+    const uniqueUserNames = [...new Set(likes.map(like => like.UserName))];
+    const displayedUserNames = uniqueUserNames.slice(0, 10); // Display up to ten usernames
 
     showWaitingGif()
     API.GetPhotosById(photoId).then((photo) => {
@@ -767,11 +785,16 @@ async function renderDetailPhoto(photoId) {
             <div style="display: flex;justify-content: space-between;">
                 <div class="photoDetailsCreationDate">${convertToFrenchDate(photo.Date)}</div>
                                                                               <!--Remove "-regular" for a fill thumbs up-->
-                <div class="likesSummary" style="margin-right: 10px">${likes.length}<i class="cmdIcon fa-regular fa-thumbs-up"></i></div>
+                <div class="likesSummary" id="${photo.Id}-Likes" style="margin-right: 10px" title="${displayedUserNames.join(', ')}">${likes.length}<i class="cmdIcon ${thumbsUpIconClass} fa-thumbs-up"></i></div>
             </div>
             <div class="photoDetailsDescription">${photo.Description}</div>
     `)
-    })
+
+        $(`#${photo.Id}-Likes i`).on('click', function() {
+            likePhoto(photo.Id, API.retrieveLoggedUser().Id, liked);
+        });
+    });
+
 }
 
 function renderVerify() {

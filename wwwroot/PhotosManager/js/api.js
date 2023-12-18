@@ -237,6 +237,7 @@ class API {
         return new Promise(resolve => {
             $.ajax({
                 url: `${serverHost}/api/photoLike/like`, ///${photoId}/${userId}
+                // url: serverHost + photos_API + "/" + data.Id,
                 type: 'POST',
                 headers: API.getBearerAuthorizationToken(),
                 contentType: 'application/json',
