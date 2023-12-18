@@ -25,7 +25,6 @@ export default class Photo extends Model {
         instance.Owner = usersRepository.get(instance.OwnerId);
         if (instance.Owner != null) {
             instance.OwnerName = instance.Owner.Name;
-            instance.Likes = [];
         }
 
         return instance;

@@ -388,6 +388,7 @@ async function renderPhotos() {
     }
 }
 
+
 async function renderPhotosList() {
     eraseContent();
     $("#newPhotoCmd").show();
@@ -400,20 +401,23 @@ async function renderPhotosList() {
         let photosContainer = $("#content").append(`
         <div class="photosLayout"> </div>`)
 
-        console.log(photos);
-        photos.data.forEach(photo => renderPhoto(photo));
+        photos.data.forEach(photo => {
+            // Check if the photo belongs to the logged-in user or if it's shared
+            if (photo.OwnerId === API.retrieveLoggedUser().Id || photo.Shared) {
+                renderPhoto(photo);
+            }
+        });
     }
-
 }
+
 async function renderPhoto(photo) {
-
     let owner = photo.Owner;
-
-    let liked = photo.Likes.includes(API.retrieveLoggedUser().Id);
+    let photoLikes = await API.GetPhotoLikes(photo.Id);
+    let liked = photoLikes.some(like => like.UserId === API.retrieveLoggedUser().Id);
     let thumbsUpIconClass = liked ? "fa" : "fa-regular";
 
     $('#content').find('.photosLayout').append(`
-        <div class="photoLayout" >
+        <div class="photoLayout" id="${photo.id}" >
             <div class="photoTitleContainer">
                 <div class="photoTitle">${photo.Title}</div>
                 <span class="photoIcons">
@@ -422,35 +426,58 @@ async function renderPhoto(photo) {
                 </span>
             </div>
 
-            <div class="UserAvatarSmall" id="avatar" style="background-image:url('${owner.Avatar}'); border: 1px solid white;" title="${owner.Name}"></div>
-            <div class="photoImage" onclick="renderDetailPhoto('${photo.Id}')" style="background-image: url(${photo.Image})"></div>
-            
-            <div class="photoTitleContainer">
-                <div class="photoCreationDate">
-                    <div class="creationText">${convertToFrenchDate(photo.Date)}</div>
+            <div class="photoImage" onclick="renderDetailPhoto('${photo.Id}')" style="background-image: url(${photo.Image})">
+                  <div class="UserAvatarSmall" id="avatar" style="background-image:url('${owner.Avatar}'); " title="${owner.Name}"></div>
+            </div>
+
+            <div class="photoDetailsContainer">
+                <div class="detailsRow">
+                    <div class="photoCreationDate">
+                        <div class="creationText">${convertToFrenchDate(photo.Date)}</div>
+                        <div class="likesSummary" onclick="likePhoto('${photo.Id}', '${API.retrieveLoggedUser().Id}')" id="${photo.Id}-Likes">
+                        ${photoLikes.length} <i class="cmdIcon ${thumbsUpIconClass} fa-thumbs-up fa-2x" title="Horhor"></i>
+                    </div>
+                    </div>
+                    
                 </div>
-                <div class="likesSummary" onclick="likePhoto('${photo.Id}', '${API.retrieveLoggedUser().Id}')">
-                    ${photo.Likes.length} <i class="cmdIcon ${thumbsUpIconClass} fa-thumbs-up fa-2x" title="Horhor"></i>
-                </div> 
             </div>
         </div>
     `);
-} // <div class="likesSummary">${photo.Likes.length} <i class="cmdIcon fa-regular fa-thumbs-up fa-2x" title="Horhor"></i></div>
+}
+
+
 
 async function likePhoto(photoId, userId) {
     let photo = await API.GetPhotosById(photoId);
-    console.log(photo);
+    let photoLikes = await API.GetPhotoLikes(photo.Id);
 
     API.LikePhoto(photoId, userId).then(response => {
-        console.log(response)
-        this.classList.remove("fa-regular")
-        this.classList.remove("fa")
+        let likeCounter = photoLikes.length;
+        let liked = photoLikes.some(like => like.UserId === API.retrieveLoggedUser().Id);
+        let thumbsUpIconClass = liked ? "fa" : "fa-regular";
 
-    }).catch(() => {
-        renderError("Un problème est survenu.")
-    })
 
+        let hasFaClass = $(`#${photo.Id}-Likes i`).hasClass('fa');
+        let hasFaRegularClass = $(`#${photo.Id}-Likes i`).hasClass('fa-regular');
+
+
+        console.log(hasFaClass);
+
+        if (!hasFaClass) {
+            thumbsUpIconClass = "fa"
+
+            likeCounter++;  // Increase the like counter
+        } else {
+
+            thumbsUpIconClass = "fa-regular"
+            //likeCounter--;  // Decrease the like counter
+        }
+
+        // Update the like counter in the DOM
+        $(`#${photo.Id}-Likes`).html(`${likeCounter} <i class="cmdIcon ${thumbsUpIconClass} fa-thumbs-up fa-2x" title="Horhor"></i>`);
+    });
 }
+
 
 
 async function renderCreatePhoto() {
@@ -573,7 +600,6 @@ function renderModifyPhoto(photoId) {
                 photo.Description = data.Description
                 photo.Title = data.Title
                 photo.Shared = $("#Shared").prop("checked")
-                console.log(photo)
                 event.preventDefault()
                 showWaitingGif()
                 if (await API.UpdatePhoto(photo)) {
@@ -594,7 +620,6 @@ function renderDeletePhoto(photoId){
     showWaitingGif()
     API.GetPhotosById(photoId).then(
         (photo) => {
-            console.log(photo)
             eraseContent()
             UpdateHeader("Retrait de photo", "deletePhoto");
             $("#newPhotoCmd").hide()
@@ -632,12 +657,10 @@ function renderDeletePhoto(photoId){
 async function renderDetailPhoto(photoId){
     let loggedUser = API.retrieveLoggedUser()
 
-    let likes = await API.GetLikesById(photoId);
-
+    let likes = await API.GetPhotoLikes(photoId);
 
     showWaitingGif()
     API.GetPhotosById(photoId).then( (photo) => {
-        console.log(photo.Likes);
         eraseContent()
         UpdateHeader("Modification de photo", "updatePhoto");
         $("#newPhotoCmd").hide()
@@ -656,7 +679,7 @@ async function renderDetailPhoto(photoId){
                 <div style="display: flex;justify-content: space-between;">
                     <div class="photoDetailsCreationDate">${convertToFrenchDate(photo.Date)}</div>
                                                                                   <!--Remove "-regular" for a fill thumbs up-->
-                    <div class="likesSummary" style="margin-right: 10px">3<i class="cmdIcon fa-regular fa-thumbs-up"></i></div>
+                    <div class="likesSummary" style="margin-right: 10px">${likes.length}<i class="cmdIcon fa-regular fa-thumbs-up"></i></div>
                 </div>
                 <div class="photoDetailsDescription">${photo.Description}</div>
         `)
