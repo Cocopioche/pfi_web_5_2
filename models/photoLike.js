@@ -7,12 +7,12 @@ export default class PhotoLike extends Model {
     constructor()
     {
         super();
+        this.addField('LikeId', 'string');
         this.addField('PhotoId', 'string');
-        //this.addField('Title', 'string');
-        this.addField('Likers', 'array');
-        this.addField('Likes','integer');
+        this.addField('UserId', 'string');
 
-        this.setKey("PhotoId");
+
+        this.setKey("LikeId");
     }
 
     bindExtraData(instance) {

@@ -6,15 +6,36 @@ import Controller from './Controller.js';
 import {nowInSeconds} from "../utilities.js";
 import TokenManager from "../tokensManager.js";
 
-export default class Photos extends Controller {
+export default class Likes extends Controller {
     constructor(HttpContext) {
         super(HttpContext, new Repository(new PhotoModel()), Authorizations.user());
-        //this.photoLikesRepository = new Repository(new PhotoLikeModel());
+        this.photoLikesRepository = new Repository(new PhotoLikeModel());
     }
-    like(photo) {
+    like(Horhor) {
+        let userId = Horhor.userId;
+        let photoId = Horhor.photoId;
+
+
+        if (userId && photoId) {
+            let likeId = photoId+userId
+            let photoLike = this.photoLikesRepository.findByField("LikeId",  likeId)
+
+
+            if (photoLike) {
+                this.photoLikesRepository.remove(photoLike.Id);
+                this.HttpContext.response.accepted("Photo unliked successfully.");
+            } else {
+                this.photoLikesRepository.add({ PhotoId: photoId, UserId: userId, LikeId: likeId });
+                this.HttpContext.response.accepted("Photo liked successfully.");
+            }
+        } else {
+            this.HttpContext.response.badRequest("UserId or PhotoId is not specified.");
+        }
+    }
+    deleteLike(photo) {
         console.log(photo);
 
-        if (photo) {
+        if (userId && photo) {
             let photo = this.repository.findByField("Id", photo.Id);
             console.log(photo);
 

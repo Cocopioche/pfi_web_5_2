@@ -242,17 +242,17 @@ class API {
     //         });
     //     });
     // }
-    static LikePhoto(photo, photoId, userId) {
+    static LikePhoto(photoId, userId) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: `${serverHost}/api/photos/like`, ///${photoId}/${userId}
+                url: `${serverHost}/api/photoLike/like`, ///${photoId}/${userId}
                 type: 'POST',
                 headers: API.getBearerAuthorizationToken(),
                 contentType: 'application/json',
-                data: JSON.stringify(photo), //data: JSON.stringify({ userId: userId, photoId: photoId }),
+                data: JSON.stringify({ userId: userId, photoId: photoId }), //data: JSON.stringify({ userId: userId, photoId: photoId }),
                 success: data => { resolve(data); },
-                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
+                error: xhr => { API.setHttpErrorState(xhr); resolve("ERREUR"); }
             });
         });
     }

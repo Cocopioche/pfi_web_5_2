@@ -54,9 +54,9 @@ function installWindowResizeHandler() {
             $(window).trigger('resizeend');
         }, resizeEndTriggerDelai);
     }).on('resizestart', function () {
-        console.log('resize start');
+        //console.log('resize start');
     }).on('resizeend', function () {
-        console.log('resize end');
+        //console.log('resize end');
         if ($('#photosLayout') != null) {
             getViewPortPhotosRanges();
             if (currentViewName == "photosList")
@@ -441,7 +441,7 @@ async function likePhoto(photoId, userId) {
     let photo = await API.GetPhotosById(photoId);
     console.log(photo);
 
-    API.LikePhoto(photo,photoId, userId).then(response => {
+    API.LikePhoto(photoId, userId).then(response => {
         console.log(response)
         this.classList.remove("fa-regular")
         this.classList.remove("fa")
