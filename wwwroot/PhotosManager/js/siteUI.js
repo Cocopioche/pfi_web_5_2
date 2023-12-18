@@ -74,7 +74,54 @@ function attachCmd() {
     $('#renderManageUsersMenuCmd').on('click', renderManageUsers);
     $('#editProfilCmd').on('click', renderEditProfilForm);
     $('#aboutCmd').on("click", renderAbout);
-    $("#newPhotoCmd").on("click", renderCreatePhoto);
+    $("#newPhotoCmd").on("click", () => {
+        renderCreatePhoto()
+    });
+
+    $("#sortByDateCmd").click(() => {
+        $(".fa-check").removeClass("menuIcon fa-check mx-2").addClass("menuIcon fa-fw mx-2");
+        $("#sortByDateCmd .fa-fw").removeClass("menuIcon fa-fw mx-2").addClass("menuIcon fa-check mx-2");
+        renderPhotosList((photos) => sortByDate(photos))
+    });
+
+    $("#sortByOwnersCmd").click(() => {
+        $(".fa-check").removeClass("menuIcon fa-check mx-2").addClass("menuIcon fa-fw mx-2");
+        $("#sortByOwnersCmd .fa-fw").removeClass("menuIcon fa-fw mx-2").addClass("menuIcon fa-check mx-2");
+        renderPhotosList((photos) => sortByOwners(photos));
+    });
+
+    $("#sortByLikesCmd").click(() => {
+        $(".fa-check").removeClass("menuIcon fa-check mx-2").addClass("menuIcon fa-fw mx-2");
+        $("#sortByLikesCmd .fa-fw").removeClass("menuIcon fa-fw mx-2").addClass("menuIcon fa-check mx-2");
+        renderPhotosList((photos) => sortByLikes(photos));
+    });
+
+    $("#ownerOnlyCmd").click(() => {
+        $(".fa-check").removeClass("menuIcon fa-check mx-2").addClass("menuIcon fa-fw mx-2");
+        $("#ownerOnlyCmd .fa-fw").removeClass("menuIcon fa-fw mx-2").addClass("menuIcon fa-check mx-2");
+        renderPhotosList((photos) => sortByMe(photos));
+    });
+}
+
+function sortByDate(photos) {
+    photos = photos
+    return photos.sort((a, b) => a.Date - b.Date)
+}
+
+function sortByOwners(photos) {
+    photos = photos
+    return photos.sort((a, b) => a.OwnerId.localeCompare(b.OwnerId));
+}
+
+function sortByLikes(photos) {
+    //TODO
+    return photos
+}
+
+function sortByMe(photos) {
+    photos = photos
+    myId = API.retrieveLoggedUser().Id
+    return photos.filter(photo => photo.OwnerId === myId);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,8 +157,28 @@ function loggedUserMenu() {
 
 function viewMenu(viewName) {
     if (viewName == "photosList") {
-        // todo
-        return "";
+        return "" +
+            "    <span class=\"dropdown-item\" id=\"sortByDateCmd\">\n" +
+            "        <i class=\"menuIcon fa fa-check mx-2\"></i>\n" +
+            "        <i class=\"menuIcon fa fa-calendar mx-2\"></i>\n" +
+            "        Photos par date de création\n" +
+            "    </span>\n" +
+            "    <span class=\"dropdown-item\" id=\"sortByOwnersCmd\">\n" +
+            "        <i class=\"menuIcon fa fa-fw mx-2\"></i>\n" +
+            "        <i class=\"menuIcon fa fa-users mx-2\"></i>\n" +
+            "        Photos par créateur\n" +
+            "    </span>\n" +
+            "    <span class=\"dropdown-item\" id=\"sortByLikesCmd\">\n" +
+            "        <i class=\"menuIcon fa fa-fw mx-2\"></i>\n" +
+            "        <i class=\"menuIcon fa fa-user mx-2\"></i>\n" +
+            "        Photos les plus aiméés\n" +
+            "    </span>\n" +
+            "    <span class=\"dropdown-item\" id=\"ownerOnlyCmd\">\n" +
+            "        <i class=\"menuIcon fa fa-fw mx-2\"></i>\n" +
+            "        <i class=\"menuIcon fa fa-user mx-2\"></i>\n" +
+            "        Mes photos\n" +
+            "    </span>\n" +
+            "    `";
     } else
         return "";
 }
@@ -389,11 +456,15 @@ async function renderPhotos() {
 }
 
 
-async function renderPhotosList() {
+async function renderPhotosList(sortFunction = null) {
     eraseContent();
     $("#newPhotoCmd").show();
 
     let photos = await API.GetPhotos();
+    photos = photos.data
+    if (sortFunction !== null) {
+        photos = sortFunction(photos)
+    }
 
     if (API.error) {
         console.log("OH NOOOOOOOOO");
@@ -401,7 +472,7 @@ async function renderPhotosList() {
         let photosContainer = $("#content").append(`
         <div class="photosLayout"> </div>`)
 
-        photos.data.forEach(photo => {
+        photos.forEach(photo => {
             // Check if the photo belongs to the logged-in user or if it's shared
             if (photo.OwnerId === API.retrieveLoggedUser().Id || photo.Shared) {
                 renderPhoto(photo);
@@ -409,6 +480,7 @@ async function renderPhotosList() {
         });
     }
 }
+
 
 async function renderPhoto(photo) {
     let owner = photo.Owner;
@@ -448,16 +520,18 @@ async function renderPhoto(photo) {
                     </div>
                     </div>
                 </div>
+                </div>
+                
             </div>
         </div>
-    `);
+    </div>
+`);
 }
 
 async function getUserNameById(userId) {
     const userData = await API.GetAccount(userId);
     return userData.Name;
 }
-
 
 
 async function likePhoto(photoId, userId) {
@@ -492,50 +566,52 @@ async function likePhoto(photoId, userId) {
 }
 
 
-
-async function renderCreatePhoto() {
+async function renderCreatePhoto(title = "", description = "", imageError = "") {
+    console.log(title)
     timeout()
     eraseContent()
     UpdateHeader("Ajout de photos", "createPhoto");
     $("#newPhotoCmd").hide()
     $("#content").append(`
-    <br>
-    <form class="form" id="createPhotoForm">
-        <fieldset>
-            <legend>Informations</legend>
-            <input class="form-control" 
-                   type="text"
-                   name="Title"
-                   id="Title"
-                   placeholder="Titre"
-                   required>
-            <textarea class="form-control"
-                      name="Description"
-                      id="Description"
-                      placeholder="Description"
-                      rows="4"
-                      required></textarea>
-            <input 
-                   type="checkbox"
-                   name="Share"
-                   id="Shared">
-            <label for="Share" style="user-select: none" >Partagée</label>
-        </fieldset>
-        <fieldset>
-            <legend>Image</legend>
-            <div class='imageUploader' 
-                 newImage='true' 
-                 controlId='Image' 
-                 imageSrc='images/PhotoCloudLogo.png' 
-                 waitingImage="images/Loading_icon.gif">
-            </div>
-        </fieldset>
-        <input type='submit' name='submit' id='savePhoto' value="Enregistrer" class="form-control btn-primary">
-    </form>
-    <div class="cancel">
-        <button class="form-control btn-secondary" id="abortCreatePhotoCmd">Annuler</button>
-    </div>
-    `);
+<br>
+<form class="form" id="createPhotoForm">
+    <fieldset>
+        <legend>Informations</legend>
+        <input class="form-control" 
+               type="text"
+               name="Title"
+               id="Title"
+               placeholder="Titre"
+               value="${title}"
+               required>
+        <textarea class="form-control"
+                  name="Description"
+                  id="Description"
+                  placeholder="Description"
+                  rows="4"
+                  required>${description}</textarea>
+        <input 
+               type="checkbox"
+               name="Share"
+               id="Shared">
+        <label for="Share" style="user-select: none" >Partagée</label>
+    </fieldset>
+    <fieldset>
+        <legend>Image</legend>
+        <div class='imageUploader' 
+             newImage='true' 
+             controlId='Image' 
+             imageSrc='images/PhotoCloudLogo.png' 
+             waitingImage="images/Loading_icon.gif">
+        </div>
+    </fieldset>
+    <div id="imageError" class="errorContainer">${imageError}</div>
+    <input type='submit' name='submit' id='savePhoto' value="Enregistrer" class="form-control btn-primary">
+</form>
+<div class="cancel">
+    <button class="form-control btn-secondary" id="abortCreatePhotoCmd">Annuler</button>
+</div>
+`);
     initFormValidation()
     initImageUploaders();
     $("#abortCreatePhotoCmd").on("click", renderPhotosList)
@@ -544,7 +620,10 @@ async function renderCreatePhoto() {
         data["Shared"] = $("#Shared").prop("checked")
         data['OwnerId'] = API.retrieveLoggedUser().Id
         data['Likes'] = [];
-
+        if (data.Image === "") {
+            renderCreatePhoto(data.Title, data.Description, "L'image est vide")
+            return
+        }
         event.preventDefault()
         showWaitingGif()
         console.log(data)
@@ -565,45 +644,45 @@ function renderModifyPhoto(photoId) {
             UpdateHeader("Modification de photo", "updatePhoto");
             $("#newPhotoCmd").hide()
             $("#content").append(`
-            <br>
-            <form class="form" id="modifyPhotoForm">
-                <fieldset>
-                    <legend>Informations</legend>
-                    <input class="form-control" 
-                           type="text"
-                           name="Title"
-                           id="Title"
-                           placeholder="Titre"
-                           required
-                           value="${photo.Title}">
-                    <textarea class="form-control"
-                              name="Description"
-                              id="Description"
-                              placeholder="Description"
-                              rows="4"
-                              required>${photo.Description}</textarea>
-                    <input 
-                           type="checkbox"
-                           name="Share"
-                           id="Shared"
-                           ${photo.Shared ? 'checked' : ''}>
-                    <label for="Share" style="user-select: none"  >Partagée</label>
-                </fieldset>
-                <fieldset>
-                    <legend>Image</legend>
-                    <div class='imageUploader' 
-                         newImage='true' 
-                         controlId='Image' 
-                         imageSrc='${photo.Image}' 
-                         waitingImage="images/Loading_icon.gif">
-                    </div>
-                </fieldset>
-                <input type='submit' name='submit' id='savePhoto' value="Enregistrer" class="form-control btn-primary">
-            </form>
-    <div class="cancel">
-        <button class="form-control btn-secondary" id="abortModifyPhotoCmd">Annuler</button>
-    </div>
-           `);
+        <br>
+        <form class="form" id="modifyPhotoForm">
+            <fieldset>
+                <legend>Informations</legend>
+                <input class="form-control" 
+                       type="text"
+                       name="Title"
+                       id="Title"
+                       placeholder="Titre"
+                       required
+                       value="${photo.Title}">
+                <textarea class="form-control"
+                          name="Description"
+                          id="Description"
+                          placeholder="Description"
+                          rows="4"
+                          required>${photo.Description}</textarea>
+                <input 
+                       type="checkbox"
+                       name="Share"
+                       id="Shared"
+                       ${photo.Shared ? 'checked' : ''}>
+                <label for="Share" style="user-select: none"  >Partagée</label>
+            </fieldset>
+            <fieldset>
+                <legend>Image</legend>
+                <div class='imageUploader' 
+                     newImage='true' 
+                     controlId='Image' 
+                     imageSrc='${photo.Image}' 
+                     waitingImage="images/Loading_icon.gif">
+                </div>
+            </fieldset>
+            <input type='submit' name='submit' id='savePhoto' value="Enregistrer" class="form-control btn-primary">
+        </form>
+<div class="cancel">
+    <button class="form-control btn-secondary" id="abortModifyPhotoCmd">Annuler</button>
+</div>
+       `);
             initFormValidation()
             initImageUploaders();
             $("#abortModifyPhotoCmd").on("click", renderPhotosList)
@@ -628,7 +707,7 @@ function renderModifyPhoto(photoId) {
 
 }
 
-function renderDeletePhoto(photoId){
+function renderDeletePhoto(photoId) {
     timeout()
     showWaitingGif()
     API.GetPhotosById(photoId).then(
@@ -637,19 +716,19 @@ function renderDeletePhoto(photoId){
             UpdateHeader("Retrait de photo", "deletePhoto");
             $("#newPhotoCmd").hide()
             $("#content").append(`
-            <div class="content loginForm">
-                <br>
-                
-                <div class="form">
-                 <h3> Voulez-vous vraiment effacer cette photo? </h3>
-                 <div class="photoTitle">${photo.Title}</div>
-                 <img class="photoDetailsLargeImage" src="${photo.Image}" alt="${photo.Description}">
-                 <button class="form-control btn-danger" id="deletePhotoCmd">Effacer la photo</button>
-                 <br>
-                 <button class="form-control btn-secondary" id="cancelDeletePhotoCmd">Annuler</button>
-                </div>
+        <div class="content loginForm">
+            <br>
+            
+            <div class="form">
+             <h3> Voulez-vous vraiment effacer cette photo? </h3>
+             <div class="photoTitle">${photo.Title}</div>
+             <img class="photoDetailsLargeImage" src="${photo.Image}" alt="${photo.Description}">
+             <button class="form-control btn-danger" id="deletePhotoCmd">Effacer la photo</button>
+             <br>
+             <button class="form-control btn-secondary" id="cancelDeletePhotoCmd">Annuler</button>
             </div>
-           `);
+        </div>
+       `);
             $("#cancelDeletePhotoCmd").on("click", () => {
                 renderPhotosList()
             })
@@ -667,35 +746,35 @@ function renderDeletePhoto(photoId){
     )
 }
 
-async function renderDetailPhoto(photoId){
+async function renderDetailPhoto(photoId) {
     let loggedUser = API.retrieveLoggedUser()
 
     let likes = await API.GetPhotoLikes(photoId);
 
     showWaitingGif()
-    API.GetPhotosById(photoId).then( (photo) => {
+    API.GetPhotosById(photoId).then((photo) => {
         eraseContent()
         UpdateHeader("Modification de photo", "updatePhoto");
         $("#newPhotoCmd").hide()
         $("#content").append(`
-                <div class="UserContainer noselect">
-                    <div class="UserLayout">
-                        <div class="UserAvatar" style="background-image:url('${loggedUser.Avatar}')"></div>
-                        <div class="UserInfo">
-                            <span class="UserName">${loggedUser.Name}</span>
-                        </div>
+            <div class="UserContainer noselect">
+                <div class="UserLayout">
+                    <div class="UserAvatar" style="background-image:url('${loggedUser.Avatar}')"></div>
+                    <div class="UserInfo">
+                        <span class="UserName">${loggedUser.Name}</span>
                     </div>
                 </div>
-                <hr>
-                <div class="photoDetailsTitle">${photo.Title}</div>
-                <img src="${photo.Image}" class="photoDetailsLargeImage">
-                <div style="display: flex;justify-content: space-between;">
-                    <div class="photoDetailsCreationDate">${convertToFrenchDate(photo.Date)}</div>
-                                                                                  <!--Remove "-regular" for a fill thumbs up-->
-                    <div class="likesSummary" style="margin-right: 10px">${likes.length}<i class="cmdIcon fa-regular fa-thumbs-up"></i></div>
-                </div>
-                <div class="photoDetailsDescription">${photo.Description}</div>
-        `)
+            </div>
+            <hr>
+            <div class="photoDetailsTitle">${photo.Title}</div>
+            <img src="${photo.Image}" class="photoDetailsLargeImage">
+            <div style="display: flex;justify-content: space-between;">
+                <div class="photoDetailsCreationDate">${convertToFrenchDate(photo.Date)}</div>
+                                                                              <!--Remove "-regular" for a fill thumbs up-->
+                <div class="likesSummary" style="margin-right: 10px">${likes.length}<i class="cmdIcon fa-regular fa-thumbs-up"></i></div>
+            </div>
+            <div class="photoDetailsDescription">${photo.Description}</div>
+    `)
     })
 }
 
@@ -704,20 +783,20 @@ function renderVerify() {
     UpdateHeader("Vérification", "verify");
     $("#newPhotoCmd").hide();
     $("#content").append(`
-        <div class="content">
-            <form class="form" id="verifyForm">
-                <b>Veuillez entrer le code de vérification de que vous avez reçu par courriel</b>
-                <input  type='text' 
-                        name='Code'
-                        class="form-control"
-                        required
-                        RequireMessage = 'Veuillez entrer le code que vous avez reçu par courriel'
-                        InvalidMessage = 'Courriel invalide';
-                        placeholder="Code de vérification de courriel" > 
-                <input type='submit' name='submit' value="Vérifier" class="form-control btn-primary">
-            </form>
-        </div>
-    `);
+    <div class="content">
+        <form class="form" id="verifyForm">
+            <b>Veuillez entrer le code de vérification de que vous avez reçu par courriel</b>
+            <input  type='text' 
+                    name='Code'
+                    class="form-control"
+                    required
+                    RequireMessage = 'Veuillez entrer le code que vous avez reçu par courriel'
+                    InvalidMessage = 'Courriel invalide';
+                    placeholder="Code de vérification de courriel" > 
+            <input type='submit' name='submit' value="Vérifier" class="form-control btn-primary">
+        </form>
+    </div>
+`);
     initFormValidation(); // important do to after all html injection!
     $('#verifyForm').on("submit", function (event) {
         let verifyForm = getFormData($('#verifyForm'));
@@ -733,76 +812,76 @@ function renderCreateProfil() {
     UpdateHeader("Inscription", "createProfil");
     $("#newPhotoCmd").hide();
     $("#content").append(`
-        <br/>
-        <form class="form" id="createProfilForm"'>
-            <fieldset>
-                <legend>Adresse ce courriel</legend>
-                <input  type="email" 
-                        class="form-control Email" 
-                        name="Email" 
-                        id="Email"
-                        placeholder="Courriel" 
-                        required 
-                        RequireMessage = 'Veuillez entrer votre courriel'
-                        InvalidMessage = 'Courriel invalide'
-                        CustomErrorMessage ="Ce courriel est déjà utilisé"/>
+    <br/>
+    <form class="form" id="createProfilForm"'>
+        <fieldset>
+            <legend>Adresse ce courriel</legend>
+            <input  type="email" 
+                    class="form-control Email" 
+                    name="Email" 
+                    id="Email"
+                    placeholder="Courriel" 
+                    required 
+                    RequireMessage = 'Veuillez entrer votre courriel'
+                    InvalidMessage = 'Courriel invalide'
+                    CustomErrorMessage ="Ce courriel est déjà utilisé"/>
 
-                <input  class="form-control MatchedInput" 
-                        type="text" 
-                        matchedInputId="Email"
-                        name="matchedEmail" 
-                        id="matchedEmail" 
-                        placeholder="Vérification" 
-                        required
-                        RequireMessage = 'Veuillez entrez de nouveau votre courriel'
-                        InvalidMessage="Les courriels ne correspondent pas" />
-            </fieldset>
-            <fieldset>
-                <legend>Mot de passe</legend>
-                <input  type="password" 
-                        class="form-control" 
-                        name="Password" 
-                        id="Password"
-                        placeholder="Mot de passe" 
-                        required 
-                        RequireMessage = 'Veuillez entrer un mot de passe'
-                        InvalidMessage = 'Mot de passe trop court'/>
+            <input  class="form-control MatchedInput" 
+                    type="text" 
+                    matchedInputId="Email"
+                    name="matchedEmail" 
+                    id="matchedEmail" 
+                    placeholder="Vérification" 
+                    required
+                    RequireMessage = 'Veuillez entrez de nouveau votre courriel'
+                    InvalidMessage="Les courriels ne correspondent pas" />
+        </fieldset>
+        <fieldset>
+            <legend>Mot de passe</legend>
+            <input  type="password" 
+                    class="form-control" 
+                    name="Password" 
+                    id="Password"
+                    placeholder="Mot de passe" 
+                    required 
+                    RequireMessage = 'Veuillez entrer un mot de passe'
+                    InvalidMessage = 'Mot de passe trop court'/>
 
-                <input  class="form-control MatchedInput" 
-                        type="password" 
-                        matchedInputId="Password"
-                        name="matchedPassword" 
-                        id="matchedPassword" 
-                        placeholder="Vérification" required
-                        InvalidMessage="Ne correspond pas au mot de passe" />
-            </fieldset>
-            <fieldset>
-                <legend>Nom</legend>
-                <input  type="text" 
-                        class="form-control Alpha" 
-                        name="Name" 
-                        id="Name"
-                        placeholder="Nom" 
-                        required 
-                        RequireMessage = 'Veuillez entrer votre nom'
-                        InvalidMessage = 'Nom invalide'/>
-            </fieldset>
-            <fieldset>
-                <legend>Avatar</legend>
-                <div class='imageUploader' 
-                        newImage='true' 
-                        controlId='Avatar' 
-                        imageSrc='images/no-avatar.png' 
-                        waitingImage="images/Loading_icon.gif">
-            </div>
-            </fieldset>
-   
-            <input type='submit' name='submit' id='saveUser' value="Enregistrer" class="form-control btn-primary">
-        </form>
-        <div class="cancel">
-            <button class="form-control btn-secondary" id="abortCreateProfilCmd">Annuler</button>
+            <input  class="form-control MatchedInput" 
+                    type="password" 
+                    matchedInputId="Password"
+                    name="matchedPassword" 
+                    id="matchedPassword" 
+                    placeholder="Vérification" required
+                    InvalidMessage="Ne correspond pas au mot de passe" />
+        </fieldset>
+        <fieldset>
+            <legend>Nom</legend>
+            <input  type="text" 
+                    class="form-control Alpha" 
+                    name="Name" 
+                    id="Name"
+                    placeholder="Nom" 
+                    required 
+                    RequireMessage = 'Veuillez entrer votre nom'
+                    InvalidMessage = 'Nom invalide'/>
+        </fieldset>
+        <fieldset>
+            <legend>Avatar</legend>
+            <div class='imageUploader' 
+                    newImage='true' 
+                    controlId='Avatar' 
+                    imageSrc='images/no-avatar.png' 
+                    waitingImage="images/Loading_icon.gif">
         </div>
-    `);
+        </fieldset>
+
+        <input type='submit' name='submit' id='saveUser' value="Enregistrer" class="form-control btn-primary">
+    </form>
+    <div class="cancel">
+        <button class="form-control btn-secondary" id="abortCreateProfilCmd">Annuler</button>
+    </div>
+`);
     $('#loginCmd').on('click', renderLoginForm);
     initFormValidation(); // important do to after all html injection!
     initImageUploaders();
@@ -839,23 +918,23 @@ async function renderManageUsers() {
                         let blockedClass = user.Authorizations.readAccess == -1 ? "class=' blockUserCmd cmdIconVisible fa fa-ban redCmd'" : "class='blockUserCmd cmdIconVisible fa-regular fa-circle greenCmd'";
                         let blockedTitle = user.Authorizations.readAccess == -1 ? "Débloquer $name" : "Bloquer $name";
                         let userRow = `
-                        <div class="UserRow"">
-                            <div class="UserContainer noselect">
-                                <div class="UserLayout">
-                                    <div class="UserAvatar" style="background-image:url('${user.Avatar}')"></div>
-                                    <div class="UserInfo">
-                                        <span class="UserName">${user.Name}</span>
-                                        <a href="mailto:${user.Email}" class="UserEmail" target="_blank" >${user.Email}</a>
-                                    </div>
-                                </div>
-                                <div class="UserCommandPanel">
-                                    <span class="promoteUserCmd cmdIconVisible ${typeIcon} dodgerblueCmd" title="${typeTitle} ${user.Name}" userId="${user.Id}"></span>
-                                    <span ${blockedClass} title="${blockedTitle}" userId="${user.Id}" ></span>
-                                    <span class="removeUserCmd cmdIconVisible fas fa-user-slash goldenrodCmd" title="Effacer ${user.Name}" userId="${user.Id}"></span>
+                    <div class="UserRow"">
+                        <div class="UserContainer noselect">
+                            <div class="UserLayout">
+                                <div class="UserAvatar" style="background-image:url('${user.Avatar}')"></div>
+                                <div class="UserInfo">
+                                    <span class="UserName">${user.Name}</span>
+                                    <a href="mailto:${user.Email}" class="UserEmail" target="_blank" >${user.Email}</a>
                                 </div>
                             </div>
-                        </div>           
-                        `;
+                            <div class="UserCommandPanel">
+                                <span class="promoteUserCmd cmdIconVisible ${typeIcon} dodgerblueCmd" title="${typeTitle} ${user.Name}" userId="${user.Id}"></span>
+                                <span ${blockedClass} title="${blockedTitle}" userId="${user.Id}" ></span>
+                                <span class="removeUserCmd cmdIconVisible fas fa-user-slash goldenrodCmd" title="Effacer ${user.Name}" userId="${user.Id}"></span>
+                            </div>
+                        </div>
+                    </div>           
+                    `;
                         $("#content").append(userRow);
                     }
                 });
@@ -890,27 +969,27 @@ async function renderConfirmDeleteAccount(userId) {
             UpdateHeader("Retrait de compte", "confirmDeleteAccoun");
             $("#newPhotoCmd").hide();
             $("#content").append(`
-                <div class="content loginForm">
-                    <br>
-                    <div class="form UserRow ">
-                        <h4> Voulez-vous vraiment effacer cet usager et toutes ses photos? </h4>
-                        <div class="UserContainer noselect">
-                            <div class="UserLayout">
-                                <div class="UserAvatar" style="background-image:url('${userToDelete.Avatar}')"></div>
-                                <div class="UserInfo">
-                                    <span class="UserName">${userToDelete.Name}</span>
-                                    <a href="mailto:${userToDelete.Email}" class="UserEmail" target="_blank" >${userToDelete.Email}</a>
-                                </div>
+            <div class="content loginForm">
+                <br>
+                <div class="form UserRow ">
+                    <h4> Voulez-vous vraiment effacer cet usager et toutes ses photos? </h4>
+                    <div class="UserContainer noselect">
+                        <div class="UserLayout">
+                            <div class="UserAvatar" style="background-image:url('${userToDelete.Avatar}')"></div>
+                            <div class="UserInfo">
+                                <span class="UserName">${userToDelete.Name}</span>
+                                <a href="mailto:${userToDelete.Email}" class="UserEmail" target="_blank" >${userToDelete.Email}</a>
                             </div>
                         </div>
-                    </div>           
-                    <div class="form">
-                        <button class="form-control btn-danger" id="deleteAccountCmd">Effacer</button>
-                        <br>
-                        <button class="form-control btn-secondary" id="abortDeleteAccountCmd">Annuler</button>
                     </div>
+                </div>           
+                <div class="form">
+                    <button class="form-control btn-danger" id="deleteAccountCmd">Effacer</button>
+                    <br>
+                    <button class="form-control btn-secondary" id="abortDeleteAccountCmd">Annuler</button>
                 </div>
-            `);
+            </div>
+        `);
             $("#deleteAccountCmd").on("click", function () {
                 adminDeleteAccount(userToDelete.Id);
             });
@@ -929,84 +1008,84 @@ function renderEditProfilForm() {
         UpdateHeader("Profil", "editProfil");
         $("#newPhotoCmd").hide();
         $("#content").append(`
-            <br/>
-            <form class="form" id="editProfilForm"'>
-                <input type="hidden" name="Id" id="Id" value="${loggedUser.Id}"/>
-                <fieldset>
-                    <legend>Adresse ce courriel</legend>
-                    <input  type="email" 
-                            class="form-control Email" 
-                            name="Email" 
-                            id="Email"
-                            placeholder="Courriel" 
-                            required 
-                            RequireMessage = 'Veuillez entrer votre courriel'
-                            InvalidMessage = 'Courriel invalide'
-                            CustomErrorMessage ="Ce courriel est déjà utilisé"
-                            value="${loggedUser.Email}" >
+        <br/>
+        <form class="form" id="editProfilForm"'>
+            <input type="hidden" name="Id" id="Id" value="${loggedUser.Id}"/>
+            <fieldset>
+                <legend>Adresse ce courriel</legend>
+                <input  type="email" 
+                        class="form-control Email" 
+                        name="Email" 
+                        id="Email"
+                        placeholder="Courriel" 
+                        required 
+                        RequireMessage = 'Veuillez entrer votre courriel'
+                        InvalidMessage = 'Courriel invalide'
+                        CustomErrorMessage ="Ce courriel est déjà utilisé"
+                        value="${loggedUser.Email}" >
 
-                    <input  class="form-control MatchedInput" 
-                            type="text" 
-                            matchedInputId="Email"
-                            name="matchedEmail" 
-                            id="matchedEmail" 
-                            placeholder="Vérification" 
-                            required
-                            RequireMessage = 'Veuillez entrez de nouveau votre courriel'
-                            InvalidMessage="Les courriels ne correspondent pas" 
-                            value="${loggedUser.Email}" >
-                </fieldset>
-                <fieldset>
-                    <legend>Mot de passe</legend>
-                    <input  type="password" 
-                            class="form-control" 
-                            name="Password" 
-                            id="Password"
-                            placeholder="Mot de passe" 
-                            InvalidMessage = 'Mot de passe trop court' >
+                <input  class="form-control MatchedInput" 
+                        type="text" 
+                        matchedInputId="Email"
+                        name="matchedEmail" 
+                        id="matchedEmail" 
+                        placeholder="Vérification" 
+                        required
+                        RequireMessage = 'Veuillez entrez de nouveau votre courriel'
+                        InvalidMessage="Les courriels ne correspondent pas" 
+                        value="${loggedUser.Email}" >
+            </fieldset>
+            <fieldset>
+                <legend>Mot de passe</legend>
+                <input  type="password" 
+                        class="form-control" 
+                        name="Password" 
+                        id="Password"
+                        placeholder="Mot de passe" 
+                        InvalidMessage = 'Mot de passe trop court' >
 
-                    <input  class="form-control MatchedInput" 
-                            type="password" 
-                            matchedInputId="Password"
-                            name="matchedPassword" 
-                            id="matchedPassword" 
-                            placeholder="Vérification" 
-                            InvalidMessage="Ne correspond pas au mot de passe" >
-                </fieldset>
-                <fieldset>
-                    <legend>Nom</legend>
-                    <input  type="text" 
-                            class="form-control Alpha" 
-                            name="Name" 
-                            id="Name"
-                            placeholder="Nom" 
-                            required 
-                            RequireMessage = 'Veuillez entrer votre nom'
-                            InvalidMessage = 'Nom invalide'
-                            value="${loggedUser.Name}" >
-                </fieldset>
-                <fieldset>
-                    <legend>Avatar</legend>
-                    <div class='imageUploader' 
-                            newImage='false' 
-                            controlId='Avatar' 
-                            imageSrc='${loggedUser.Avatar}' 
-                            waitingImage="images/Loading_icon.gif">
-                </div>
-                </fieldset>
-
-                <input type='submit' name='submit' id='saveUser' value="Enregistrer" class="form-control btn-primary">
-                
-            </form>
-            <div class="cancel">
-                <button class="form-control btn-secondary" id="abortEditProfilCmd">Annuler</button>
+                <input  class="form-control MatchedInput" 
+                        type="password" 
+                        matchedInputId="Password"
+                        name="matchedPassword" 
+                        id="matchedPassword" 
+                        placeholder="Vérification" 
+                        InvalidMessage="Ne correspond pas au mot de passe" >
+            </fieldset>
+            <fieldset>
+                <legend>Nom</legend>
+                <input  type="text" 
+                        class="form-control Alpha" 
+                        name="Name" 
+                        id="Name"
+                        placeholder="Nom" 
+                        required 
+                        RequireMessage = 'Veuillez entrer votre nom'
+                        InvalidMessage = 'Nom invalide'
+                        value="${loggedUser.Name}" >
+            </fieldset>
+            <fieldset>
+                <legend>Avatar</legend>
+                <div class='imageUploader' 
+                        newImage='false' 
+                        controlId='Avatar' 
+                        imageSrc='${loggedUser.Avatar}' 
+                        waitingImage="images/Loading_icon.gif">
             </div>
+            </fieldset>
 
-            <div class="cancel">
-                <hr>
-                <button class="form-control btn-warning" id="confirmDelelteProfilCMD">Effacer le compte</button>
-            </div>
-        `);
+            <input type='submit' name='submit' id='saveUser' value="Enregistrer" class="form-control btn-primary">
+            
+        </form>
+        <div class="cancel">
+            <button class="form-control btn-secondary" id="abortEditProfilCmd">Annuler</button>
+        </div>
+
+        <div class="cancel">
+            <hr>
+            <button class="form-control btn-warning" id="confirmDelelteProfilCMD">Effacer le compte</button>
+        </div>
+    `);
         initFormValidation(); // important do to after all html injection!
         initImageUploaders();
         addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser');
@@ -1031,17 +1110,17 @@ function renderConfirmDeleteProfil() {
         UpdateHeader("Retrait de compte", "confirmDeleteProfil");
         $("#newPhotoCmd").hide();
         $("#content").append(`
-            <div class="content loginForm">
+        <div class="content loginForm">
+            <br>
+            
+            <div class="form">
+             <h3> Voulez-vous vraiment effacer votre compte? </h3>
+                <button class="form-control btn-danger" id="deleteProfilCmd">Effacer mon compte</button>
                 <br>
-                
-                <div class="form">
-                 <h3> Voulez-vous vraiment effacer votre compte? </h3>
-                    <button class="form-control btn-danger" id="deleteProfilCmd">Effacer mon compte</button>
-                    <br>
-                    <button class="form-control btn-secondary" id="cancelDeleteProfilCmd">Annuler</button>
-                </div>
+                <button class="form-control btn-secondary" id="cancelDeleteProfilCmd">Annuler</button>
             </div>
-        `);
+        </div>
+    `);
         $("#deleteProfilCmd").on("click", deleteProfil);
         $('#cancelDeleteProfilCmd').on('click', renderEditProfilForm);
     }
@@ -1060,34 +1139,34 @@ function renderLoginForm() {
     UpdateHeader("Connexion", "Login");
     $("#newPhotoCmd").hide();
     $("#content").append(`
-        <div class="content" style="text-align:center">
-            <div class="loginMessage">${loginMessage}</div>
-            <form class="form" id="loginForm">
-                <input  type='email' 
-                        name='Email'
-                        class="form-control"
-                        required
-                        RequireMessage = 'Veuillez entrer votre courriel'
-                        InvalidMessage = 'Courriel invalide'
-                        placeholder="adresse de courriel"
-                        value='${Email}'> 
-                <span style='color:red'>${EmailError}</span>
-                <input  type='password' 
-                        name='Password' 
-                        placeholder='Mot de passe'
-                        class="form-control"
-                        required
-                        RequireMessage = 'Veuillez entrer votre mot de passe'
-                        InvalidMessage = 'Mot de passe trop court' >
-                <span style='color:red'>${passwordError}</span>
-                <input type='submit' name='submit' value="Entrer" class="form-control btn-primary">
-            </form>
-            <div class="form">
-                <hr>
-                <button class="form-control btn-info" id="createProfilCmd">Nouveau compte</button>
-            </div>
+    <div class="content" style="text-align:center">
+        <div class="loginMessage">${loginMessage}</div>
+        <form class="form" id="loginForm">
+            <input  type='email' 
+                    name='Email'
+                    class="form-control"
+                    required
+                    RequireMessage = 'Veuillez entrer votre courriel'
+                    InvalidMessage = 'Courriel invalide'
+                    placeholder="adresse de courriel"
+                    value='${Email}'> 
+            <span style='color:red'>${EmailError}</span>
+            <input  type='password' 
+                    name='Password' 
+                    placeholder='Mot de passe'
+                    class="form-control"
+                    required
+                    RequireMessage = 'Veuillez entrer votre mot de passe'
+                    InvalidMessage = 'Mot de passe trop court' >
+            <span style='color:red'>${passwordError}</span>
+            <input type='submit' name='submit' value="Entrer" class="form-control btn-primary">
+        </form>
+        <div class="form">
+            <hr>
+            <button class="form-control btn-info" id="createProfilCmd">Nouveau compte</button>
         </div>
-    `);
+    </div>
+`);
     initFormValidation(); // important do to after all html injection!
     $('#createProfilCmd').on('click', renderCreateProfil);
     $('#loginForm').on("submit", function (event) {
@@ -1107,4 +1186,5 @@ function getFormData($form) {
     });
     return jsonObject;
 }
+
 
