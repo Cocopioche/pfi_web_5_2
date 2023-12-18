@@ -529,7 +529,7 @@ async function renderPhoto(photo) {
 }
 
 async function getUserNameById(userId) {
-    const userData = await API.GetAccount(userId);
+    const userData = await API.GetAccount(userId); //
     return userData.Name;
 }
 
