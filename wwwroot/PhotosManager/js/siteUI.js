@@ -456,7 +456,7 @@ async function renderPhotos() {
 }
 
 
-async function renderPhotosList(sortFunction = null) {
+async function renderPhotosList(sortFunction = sortByDate) {
     eraseContent();
     $("#newPhotoCmd").show();
 
